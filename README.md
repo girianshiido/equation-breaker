@@ -22,14 +22,28 @@ Douze succès, étoiles, records, indicateurs de maîtrise par compétence et ap
 
 ## Jouer
 
-1. Sélectionner un bloc au toucher, à la souris ou avec Tab puis Entrée/Espace.
-2. Sélectionner un second terme de la même somme pour **Fusionner**. Les termes doivent avoir le même degré. La sélection ne traverse jamais le signe égal.
-3. Choisir **Ajouter l’opposé** ou ouvrir **+ / − / × / ÷** pour une opération libre sur les deux membres. Un aperçu miroir explique l’équivalence avant confirmation.
-4. Développer un groupe, simplifier une fraction ou sélectionner un membre entier via son en-tête pour le factoriser.
-5. Pour un produit nul, ouvrir les portes, résoudre puis valider chaque branche avant de réunir les solutions. Pour un trinôme égal à zéro, calculer Δ puis construire les racines exactes.
-6. **Valider** lorsque x est isolé, les constantes permettent une conclusion, ou toutes les racines sont construites.
+Les termes apparaissent sans cadres permanents. Leurs zones tactiles restent généreuses ; une sélection se souligne, et la zone de dépôt apparaît pendant le geste.
 
-Échap efface la sélection ou ferme une fenêtre. Toutes les commandes disposent de boutons ; aucun glissement n’est nécessaire. Les premiers niveaux donnent une consigne, les suivants laissent plusieurs stratégies possibles. Les indices sont gradués : conseil, mise en évidence, aperçu explicatif ; ils n’appliquent pas d’action à la place du joueur.
+### Déplacer et saisir
+
+- **Glisser un terme entier vers l’autre membre** : il quitte son membre d’origine et change de signe en traversant le signe égal. Le dépôt affiche d’abord le calcul non réduit, puis fusionne les termes semblables. Par exemple, `3x + 5 = −3` donne visuellement `3x = −3 − 5`, puis `3x = −8`.
+- **Appui prolongé sur un coefficient** : le facteur suit le doigt. Tout le membre de départ est déjà divisé, tandis que le membre d’arrivée reste inchangé jusqu’au dépôt. Pour `3x + 5 = −3`, on voit donc `x + 5/3` à gauche, puis `−3/3` à droite au dépôt, et enfin `−1`.
+- **Appui prolongé sur un dénominateur** : même principe, avec multiplication de tous les termes. `x/4 + 5 = −3` devient `x + 20 = −12`.
+- Sélectionner **−x** révèle **(−1) × x**, dont le facteur peut être saisi. La touche **× (−1)** applique directement une multiplication aux deux membres.
+- Pendant une transformation incomplète, **le signe égal est suspendu**. Ce dessin transitoire n’est pas enregistré comme une égalité : seul le dépôt valide produit une transformation mathématique et compte un coup.
+- Lâcher hors de la zone, Échap, changement d’orientation ou interruption du geste : retour intégral à l’état d’origine, sans coup ni erreur supplémentaires.
+
+Un toucher court sélectionne un terme ; deux touchers sélectionnent des termes d’une même somme. Les boutons permettent fusion, développement et opérations libres. **Saisir le coefficient / le dénominateur** et **÷ / × aux deux membres** offrent une alternative complète au glissement, utilisable au clavier avec Tab puis Entrée/Espace. Les diviseurs négatifs sont parenthésés, y compris dans les étapes intermédiaires.
+
+### Choisir une méthode
+
+Les parenthèses se développent, les trinômes se factorisent et les produits nuls ouvrent des branches. Le déplacement n’est pas imposé comme méthode universelle.
+
+Dans le monde 6, maintenir le doigt sur **x²**, puis le faire glisser sur le terme en **x**, surligne le groupe. On peut aussi sélectionner les deux termes par touchers courts ou au clavier. **Compléter le carré** indique la quantité exacte ajoutée aux deux membres et montre un aperçu : pour `x² − 5x`, il faut ajouter **25/4**, et non 5/4. Les autres termes de la somme restent présents. Un coefficient de x² différent de 1 doit d’abord être ramené à 1 par division des deux membres.
+
+Quand le carré est isolé, **Extraire les racines** traite les cas : valeur négative → aucune solution réelle ; zéro → une branche ; valeur positive → deux signes. Si la racine carrée est rationnelle, chaque branche est une équation manipulable à résoudre, puis les solutions sont réunies. Les racines irrationnelles sont présentées sous deux équations symboliques et donnent un ensemble exact ; leur déplacement symbolique dans des branches interactives n’est pas implémenté. Le discriminant reste disponible comme autre méthode.
+
+**Valider** termine le niveau lorsque x est isolé, que des constantes permettent une conclusion, ou que les racines sont construites. Les indices sont gradués et ne jouent pas à la place de l’élève. L’annulation conserve les tentatives. Les niveaux, statistiques et préférences existants restent compatibles avec cette version.
 
 ### Étoiles
 
@@ -94,6 +108,7 @@ pnpm build
 pnpm preview --port 5194
 pnpm qa
 pnpm qa:updates
+pnpm qa:gestures
 ```
 
 Les tests Vitest couvrent les cas mathématiques de référence, les 72 résolutions complètes, 1 800 niveaux générés résolus, 1 200 transformations d’équivalence, les opérations interdites, l’annulation et la reconstruction des branches sauvegardées. Le scénario navigateur utilise uniquement les boutons réels : aucune commande de résolution n’est exposée par l’application.

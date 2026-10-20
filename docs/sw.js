@@ -1,4 +1,4 @@
-const CACHE="equation-breaker-ae5dc3499f428aad",FILES=["./assets/index-CLMG98Nm.js","./assets/index-DJrEXbxw.css","./icons/icon-192.png","./icons/icon-512.png","./icons/icon.svg","./index.html","./manifest.webmanifest","./","./release.json"];
+const CACHE="equation-breaker-3609b97dfd0cd34f",FILES=["./assets/index-D7q_sUHV.css","./assets/index-DT-Yc1hL.js","./icons/icon-192.png","./icons/icon-512.png","./icons/icon.svg","./index.html","./manifest.webmanifest","./","./release.json"];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)));});
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting();});
 self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith('equation-breaker-')&&key!==CACHE)await caches.delete(key);await self.clients.claim();})()));

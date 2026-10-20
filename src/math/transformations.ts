@@ -1,9 +1,11 @@
+import { squareCompletion } from './squares';
+import { gesturePlan, type DragAction } from './gestures';
 import { type Equation, type Expr, c, x, sum, product, terms, nodeAt, replace } from './ast';
 import { type Rational, rat, add, neg, mul, div, zero, one, str } from './rational';
 import { normalize, fromPoly, monomial, mono, tidy, isZero, minus, same } from './normalize';
 import { solve, solvePoly, solutionKey, discriminant } from './solve';
 import { format, operandText } from './format';
-export type Action = {
+export type Action = DragAction | { kind: 'complete-square'; ids: string[] } | {
     kind: 'combine';
     ids: string[];
 } | {
@@ -50,6 +52,20 @@ export function factorable(e: Expr): Expr | null { if (e.kind !== 'sum')
 export function transform(eq: Equation, a: Action): Transformation {
     let next = eq, why = '', label = '', mirror: string | undefined;
     switch (a.kind) {
+        case 'complete-square': {
+            const completion = squareCompletion(eq, a.ids);
+            const added = c(completion.added);
+            next = completion.side === 'l' ? { left: completion.expression, right: insert(eq.right, added) } : { left: insert(eq.left, added), right: completion.expression };
+            mirror = `+ ${operandText(completion.added)}`;
+            label = `Compléter le carré : ajouter ${operandText(completion.added)} aux deux membres`;
+            why = 'Pour x² + bx, on ajoute (b/2)² aux deux membres puis on utilise x² + bx + (b/2)² = (x + b/2)². Les autres termes restent présents.';
+            break;
+        }
+        case 'drag': {
+            const plan = gesturePlan(eq, a.id, a.part);
+            next = plan.result; why = plan.why; label = plan.label; mirror = plan.mirror;
+            break;
+        }
         case 'combine': {
             if (a.ids.length !== 2 || a.ids[0] === a.ids[1])
                 throw Error('Sélectionne deux blocs distincts.');

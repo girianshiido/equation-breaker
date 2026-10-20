@@ -55,3 +55,16 @@ Ces chiffres caractérisent cette simulation et ce scénario ; ils ne constituen
 Tests réellement exécutés : Chrome sur macOS, vues tactiles émulées, CPU ralenti, clavier, cache et coupure réseau réels du navigateur. Le navigateur reste celui d’un ordinateur : **aucun appareil Android d’entrée de gamme physique, Safari iOS/macOS ou Edge n’a été utilisé pour cette validation**. Une campagne de compatibilité matérielle reste donc à conduire.
 
 Les paramètres et aides pédagogiques, les modalités de score et le périmètre mathématique sont documentés dans le README. Les prochaines fonctionnalités ne sont pas présentées comme déjà disponibles.
+
+
+## Mise à jour 1.1 — 20 octobre 2026
+
+- 115 tests automatiques, dont les nouveaux tests de déplacement et de carré complété. Les propriétés des gestes sont vérifiées sur 300 équations générées, pour les opérations applicables.
+- Régression complète des 72 niveaux par les commandes existantes, incluant factorisation, produits nuls et discriminants.
+- Vérifications spécifiques des gestes : changement de signe au franchissement, calcul non réduit visible au dépôt, membre de départ divisé avant le membre d’arrivée, déplacement de dénominateur, révélation de −1 et touche × (−1).
+- Vérification que le modèle mathématique, les coups et les erreurs restent inchangés durant un trajet non terminé ou annulé ; un dépôt valide n’enregistre qu’une action.
+- Sélection prolongée des termes du carré complété, ajout exact de 25/4, extraction en deux branches rationnelles, résolution et réunion des solutions.
+- Gestes tactiles réels émis dans Chrome via son protocole d’entrée, en portrait 320×568 et paysage 844×390 ; ces essais restent ceux d’un navigateur de bureau, pas d’un téléphone physique.
+- Reprise après rechargement des nouveaux événements ; alternative sans glissement au clavier ; annulation par Échap et changement d’orientation ; déplacements répétés sous CPU ×6.
+
+Les rapports détaillés sont `test-results/gesture-report.json`, `test-results/browser-report.json` et `test-results/browser-quick-report.json`. Les résultats des racines carrées rationnelles ouvrent des branches manipulables. Les cas irrationnels conservent deux relations symboliques et un résultat exact, sans prétendre offrir le glissement des radicaux dans des branches.

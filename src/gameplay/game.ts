@@ -1,11 +1,13 @@
+import { squareEquation } from '../math/squares';
+import { format, operandText } from '../math/format';
 import { type Equation, c, nodeAt, terms, x } from '../math/ast';
 import { type Action, transform, zeroBranches, quadraticInfo, expandable, factorable } from '../math/transformations';
 import { normalize, monomial, isZero, mono } from '../math/normalize';
-import { rat, zero, one, neg, str } from '../math/rational';
+import { rat, zero, one, neg, str, sqrtRational } from '../math/rational';
 import { terminal, solve, union, solutionKey, type Solution, solutionText } from '../math/solve';
 import { equationText } from '../math/format';
 import type { Level } from '../levels/campaign';
-export type Event = Action | {
+export type Event = Action | { kind: 'square-roots' } | {
     kind: 'split';
 } | {
     kind: 'branch';
@@ -82,6 +84,21 @@ export function perform(g: Game, event: Event): void {
         s.label = `Branche ${s.branch + 1} validée : ${solutionText(s.completed[s.branch]!)}`;
         s.why = 'Explore les autres branches puis réunis leurs solutions.';
     }
+    else if (event.kind === 'square-roots') {
+        if (g.level.world < 5 || s.branches.length) throw Error('L’extraction des racines appartient au monde 6.');
+        const square = squareEquation(s.eq);
+        s.delta = false;
+        const exactRoot = sqrtRational(square.value);
+        if (exactRoot) {
+            const roots = zero(exactRoot) ? [exactRoot] : [exactRoot, neg(exactRoot)];
+            s.branches = roots.map(root => ({ left: square.base, right: c(root) }));
+            s.completed = roots.map(() => null); s.branch = 0; s.eq = s.branches[0]; s.answer = null;
+            s.label = `${format(square.base)} = ${str(exactRoot)}${roots.length === 2 ? ` ou ${format(square.base)} = ${str(neg(exactRoot))}` : ''}`;
+        } else s.answer = solve(s.eq);
+        if (square.value.n < 0n) s.label = 'Un carré réel ne peut pas être négatif';
+        else if (!exactRoot) s.label = `${format(square.base)} = √(${operandText(square.value)}) ou ${format(square.base)} = −√(${operandText(square.value)})`;
+        s.why = square.value.n < 0n ? 'Aucune solution réelle : un carré est toujours positif ou nul.' : 'Y² = k : si k = 0, Y = 0 ; si k > 0, Y = √k ou Y = −√k. On traite les deux signes et on réunit les solutions sans doublon.';
+    }
     else if (event.kind === 'delta') {
         if (g.level.world < 5 || s.branches.length)
             throw Error('Le discriminant appartient au monde 6.');
@@ -105,6 +122,7 @@ export function perform(g: Game, event: Event): void {
         s.why = 'On prend l’union de toutes les solutions et on retire les doublons.';
     }
     else {
+        if (event.kind === 'complete-square' && g.level.world < 5) throw Error('La complétion du carré appartient au monde 6.');
         const tr = transform(s.eq, event);
         s = { ...s, eq: tr.equation, label: tr.label, why: tr.why, mirror: tr.mirror, delta: false, answer: null };
         if (s.branch >= 0) {
@@ -112,7 +130,7 @@ export function perform(g: Game, event: Event): void {
             s.completed[s.branch] = null;
         }
     }
-    if (event.kind !== 'add' && event.kind !== 'multiply' && event.kind !== 'divide')
+    if (event.kind !== 'add' && event.kind !== 'multiply' && event.kind !== 'divide' && event.kind !== 'drag' && event.kind !== 'complete-square')
         s.mirror = undefined;
     g.history.push(g.s);
     g.events.push(event);
