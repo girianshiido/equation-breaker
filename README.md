@@ -24,7 +24,7 @@ Douze succès, étoiles, records, indicateurs de maîtrise par compétence et ap
 
 La typographie des nombres utilise Outfit, associée à DM Sans pour les textes. Les deux polices sont intégrées localement, utilisables hors ligne et distribuées sous licence OFL (sources et licences dans `public/fonts/`). Les membres restent côte à côte sur téléphone, avec un signe égal centré sur les expressions.
 
-Sur téléphone, le surlignage natif du navigateur et les gestes de zoom sont désactivés. La sélection des termes du jeu, le défilement et les champs de saisie restent disponibles. Un deuxième doigt annule une manipulation en cours. **Valider reste accessible dans une barre fixe en bas de l’écran**, en portrait comme en paysage ; les écrans courts utilisent une présentation plus compacte.
+Sur téléphone, le surlignage natif du navigateur et les gestes de zoom sont désactivés. La sélection des termes du jeu, le défilement et les champs de saisie restent disponibles. Un deuxième doigt annule une manipulation en cours. **Valider reste accessible dans une barre fixe en bas de l’écran**, en portrait comme en paysage ; les écrans courts utilisent une présentation plus compacte. Sur l’écran de réussite, **Continuer** reste également fixé en bas sur téléphone, tandis que les statistiques et les succès peuvent défiler.
 
 Les signes binaires sont centrés entre les termes, y compris pendant le dépôt (`2 + 4`). Un terme négatif conserve son signe dans le jeton transporté (`−7`, puis `7` après franchissement). Les produits numériques évitent les parenthèses superflues : `4 × 3`, `4 × (−3)`, `−3 × 4`.
 

@@ -98,3 +98,10 @@ Essais réalisés sur Chrome/macOS avec formats mobiles, entrées tactiles et CP
 - 124 tests Vitest, 23 scénarios de gestes, 19 contrôles mobiles et passe de régression des commandes et dimensions. Rapports : `gesture-report.json`, `mobile-report.json`, `browser-quick-report.json`.
 
 Les gestes tactiles et mesures sont exécutés dans Chrome/macOS avec émulation mobile. Les événements WebKit sont vérifiés par émission d’événements annulables ; cela ne constitue pas un essai de Safari sur un iPhone réel. Android et iOS physiques restent à vérifier.
+
+
+## Écran de réussite — 20 octobre 2026
+
+Le bouton de continuation est placé après la solution, avant les statistiques et les succès. Sur les petits écrans, il reste fixé en bas avec les marges de sécurité ; la navigation de bas de page est masquée pendant la réussite. Le résultat s’ouvre en haut de page. Les commandes Rejouer, Voir mes étapes et Retour aux mondes restent disponibles.
+
+Contrôle par résolution réelle du premier niveau avec une progression neuve (et ses succès débloqués) : 320×480, 320×568, 390×844, 568×320, 844×390 et 1440×768. Visibilité et cible tactile de Continuer contrôlées avant et après défilement sur mobile, puis clic et ouverture du niveau suivant. Rapport intégré à `test-results/mobile-report.json`. Essais Chromium sur macOS avec émulation mobile.
