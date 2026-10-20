@@ -1,3 +1,4 @@
+import { decodeSystems, freshSystems, type SystemsData } from '../systems/save';
 import { campaign } from '../levels/campaign';
 import { generated } from '../levels/generator';
 import { start, perform, type Game, type Event } from '../gameplay/game';
@@ -5,6 +6,7 @@ import { parse } from '../math/ast';
 import { format } from '../math/format';
 import { readRational, str } from '../math/rational';
 export const KEY = 'equation-breaker-v1';
+const SYSTEMS_KEY = 'equation-breaker-systems-v1';
 export interface Result {
     stars: number;
     moves: number;
@@ -50,8 +52,9 @@ export interface Save {
     stats: Stats;
     active: unknown;
     arcadeBest: number;
+    systems: SystemsData;
 }
-export function fresh(): Save { return { version: 1, results: {}, prefs: { sound: false, motion: !matchReduced(), contrast: false, large: false, lite: false, timer: false, memberLabels: false, explainSteps: false, theme: 'mint' }, stats: { wins: 0, clean: 0, moves: 0, errors: 0, hints: 0, expanded: 0, combined: 0, none: 0, all: 0, products: 0, fractions: 0, quadratics: 0, fast: 0, skills: Array.from({ length: 6 }, () => ({ wins: 0, errors: 0, hints: 0, transfer: 0 })) }, active: null, arcadeBest: 0 }; }
+export function fresh(): Save { return { version: 1, results: {}, prefs: { sound: false, motion: !matchReduced(), contrast: false, large: false, lite: false, timer: false, memberLabels: false, explainSteps: false, theme: 'mint' }, stats: { wins: 0, clean: 0, moves: 0, errors: 0, hints: 0, expanded: 0, combined: 0, none: 0, all: 0, products: 0, fractions: 0, quadratics: 0, fast: 0, skills: Array.from({ length: 6 }, () => ({ wins: 0, errors: 0, hints: 0, transfer: 0 })) }, active: null, systems: freshSystems(), arcadeBest: 0 }; }
 const matchReduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const object = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const count = (v: unknown, max = 1e8): number => typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : 0;
@@ -81,6 +84,7 @@ export function decode(raw: string | null): Save { const s = fresh(); if (!raw)
                 for (const k of Object.keys(item) as (keyof typeof item)[])
                     item[k] = count(value[k]); return item; });
     }
+    s.systems = decodeSystems(v.systems);
     s.active = v.active ?? null;
     s.arcadeBest = count(v.arcadeBest);
     return s;
@@ -103,13 +107,17 @@ export function load(): {
     catch {
         corrupted = true;
     }
-    return { save: decode(raw), warning: corrupted ? 'Sauvegarde illisible : une progression neuve a été chargée.' : '' };
+    const decoded = decode(raw);
+    // Older cached releases do not know this mode and may rewrite the main save.
+    if(raw&&!corrupted&&!Object.hasOwn(JSON.parse(raw),'systems')){try{decoded.systems=decodeSystems(JSON.parse(localStorage.getItem(SYSTEMS_KEY)||'null'));}catch{/* Keep a playable profile when the backup is unavailable. */}}
+    return { save: decoded, warning: corrupted ? 'Sauvegarde illisible : une progression neuve a été chargée.' : '' };
 }
 catch {
     return { save: fresh(), warning: 'Stockage local indisponible : la progression reste en mémoire pour cette visite.' };
 } }
 export function persist(s: Save): boolean { try {
     localStorage.setItem(KEY, JSON.stringify(s));
+    try { localStorage.setItem(SYSTEMS_KEY, JSON.stringify(s.systems)); } catch { /* The primary save already contains the systems progression. */ }
     return true;
 }
 catch {

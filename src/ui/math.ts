@@ -8,7 +8,7 @@ import { neg, one, type Rational, str } from '../math/rational';
 import { escape, format } from '../math/format';
 const fraction = (q: Rational) => q.d === 1n ? escape(String(q.n)) : `<span class="fraction"><span>${escape(String(q.n))}</span><span>${escape(String(q.d))}</span></span>`;
 /** One inline expression inside stretchy fences; its children never become separate flex items. */
-const fenced=(content:string, kind:'round'|'set'='round')=>{
+export const fenced=(content:string, kind:'round'|'set'='round')=>{
     const set=kind==='set';
     const left=set?'M11 1 C4 1 4 5 4 10 L4 15 Q4 20 1 20 Q4 20 4 25 L4 30 C4 35 4 39 11 39':'M11 1 C-1 8 -1 32 11 39';
     const right=set?'M1 1 C8 1 8 5 8 10 L8 15 Q8 20 11 20 Q8 20 8 25 L8 30 C8 35 8 39 1 39':'M1 1 C13 8 13 32 1 39';

@@ -7,7 +7,7 @@
 
 ## Contenu disponible
 
-72 niveaux fixes, 12 par monde, avec découverte, autonomie et transfert ; générateur reproductible pour chaque monde ; campagne progressive ; entraînement ciblé ; séries arcade de cinq équations avec chrono facultatif. Aucune contrainte de temps en campagne.
+72 niveaux d’équations fixes, 12 par monde, avec découverte, autonomie et transfert ; générateur reproductible pour chaque monde ; campagne progressive ; entraînement ciblé ; séries arcade de cinq équations avec chrono facultatif. Aucune contrainte de temps en campagne. Le mode **Systèmes** ajoute **21 niveaux** avec une progression propre : 18 en deux inconnues et 3 bonus en trois inconnues, soit **93 niveaux fixes au total**.
 
 | Monde | Compétences et cas couverts |
 | --- | --- |
@@ -65,6 +65,17 @@ Un carré nul ne crée qu’un cas : `(x−2)² = 0 ⇔ x−2 = 0`. Les facteurs
 
 **Valider** termine le niveau lorsque x est isolé, que des constantes permettent une conclusion, ou que les racines sont construites. Les indices sont gradués et ne jouent pas à la place de l’élève. L’annulation conserve les tentatives. Les niveaux, statistiques et préférences existants restent compatibles avec cette version.
 
+### Mode Systèmes
+
+Accessible depuis la carte **Systèmes** de l’accueil, la navigation ou [le lien direct](https://girianshiido.github.io/equation-breaker/#systems). La progression se débloque niveau par niveau : six substitutions, six combinaisons, six choix de méthode, puis trois systèmes 3 × 3. Elle possède ses propres étoiles et sa partie en cours, indépendantes des six mondes d’équations.
+
+- **Toucher le point d’une ligne** affiche une petite roue dentée directement dans le cadre. Tourner la roue modifie immédiatement les deux membres de cette ligne, tels qu’ils sont écrits ; relâcher valide une opération. Échap annule l’aperçu. Le sélecteur discret **× / ÷** conserve le choix. Les opérandes sont des entiers : **0 et 1 sont exclus**, les négatifs sont autorisés. Pour × 1/2 ou × (−1/2), choisir ÷ 2 ou ÷ (−2). Le champ à côté de la roue permet aussi une saisie au clavier, validée par Entrée.
+- **Glisser directement le point sur une autre ligne** additionne membre à membre. La prise reste sous le doigt ou le curseur ; la cible est surlignée. La source est conservée, seule la cible est remplacée. Les termes semblables se réduisent dans leur membre, sans changement automatique de membre : ajouter `x=2` à `y=−5x+13` donne `x+y=−5x+15`.
+- **Glisser un terme de l’autre côté du signe égal**, dans sa propre ligne, change son signe et le combine aux termes du membre d’arrivée. Le joueur isole ainsi lui-même les variables ; aucun bouton d’isolement automatique n’est proposé. Les constantes se déplacent de la même façon. Une commande sur le terme sélectionné offre une alternative au clavier.
+- **Sélectionner une variable isolée**, puis **Substituer**, remplace cette inconnue par son expression dans toutes les autres équations où elle apparaît, dans les deux membres. La définition est conservée, et aucune constante ne change automatiquement de membre : substituer x=2 dans x+y=5 laisse y+2=5, à poursuivre par le joueur. Les bonus 3 × 3 proposent deux remplacements simultanés.
+- La coche reste dans le cadre. La validation demande les inconnues visiblement isolées ou une égalité constante permettant de conclure : contradiction → ensemble vide ; dépendance → famille de solutions paramétrée. Les réponses sont des couples ou triplets ordonnés dans l’ordre x, y, z. Les opérations et les comparaisons utilisent des fractions exactes en bigint.
+- Annulation, étapes, indices, étoiles, explications facultatives, sons, reprise, export/import et hors ligne sont disponibles. Les indices décrivent un geste et ne l’appliquent pas. Lâcher hors d’une cible, Échap, un second doigt, le redimensionnement et la mise en arrière-plan annulent les déplacements sans changer le système.
+
 ### Étoiles
 
 - ★ : résolution exacte terminée.
@@ -103,6 +114,7 @@ BASE_PATH=/equation-breaker/ pnpm build
 - `src/math/transformations.ts` : règles locales et préconditions, sans déplacement magique de terme. Chaque transformation est vérifiée par proportionnalité non nulle du polynôme différence.
 - `src/math/solve.ts` : résolution exacte dans ℝ, ensembles vide/universel/fini et radicaux symboliques. Les polynômes quadratiques sont rendus moniques en interne pour identifier les mêmes solutions après changement d’échelle.
 - `src/levels/` : campagne et générateur à graines. Les résultats attendus de génération sont construits à partir des racines et contrôlés par le solveur.
+- `src/systems/` : moteur linéaire exact, 21 niveaux, gestes de ligne, molette, substitution multiple et sauvegardes.
 - `src/gameplay/` : états, branches, validation, scores, indices et succès.
 - `src/app/persistence.ts` : schéma versionné, validation, bornage, reprise par rejeu des événements ; sérialisation des opérandes exacts sans `bigint` brut.
 - `src/ui/` et `src/main.ts` : présentation, navigation interne sans dépendance aux réécritures du serveur, événements, audio facultatif.
@@ -113,7 +125,7 @@ Les équations à deux solutions irrationnelles gardent des radicaux exacts : au
 
 ## Sauvegarde et installation
 
-Progression et préférences restent dans le `localStorage` de cet appareil, sous `equation-breaker-v1`. Une sauvegarde de schéma inconnu/corrompue revient à un état valide avec avertissement. Un stockage indisponible laisse jouer en mémoire. L’export/import JSON se trouve dans les paramètres ; le remplacement et la remise à zéro demandent confirmation dans le jeu.
+Progression et préférences restent dans le `localStorage` de cet appareil, sous `equation-breaker-v1`. La progression Systèmes y est intégrée et possède une copie de compatibilité sous `equation-breaker-systems-v1`, afin de survivre à la réécriture du profil par une ancienne version encore en cache. Une sauvegarde de schéma inconnu/corrompue revient à un état valide avec avertissement. Un stockage indisponible laisse jouer en mémoire. L’export/import JSON se trouve dans les paramètres ; le remplacement et la remise à zéro demandent confirmation dans le jeu.
 
 Le service worker précache le jeu, tous ses niveaux, les icônes, ses styles, les polices et les bruitages. L’indication **Prêt pour le hors-ligne** apparaît seulement après vérification de la présence de tous les fichiers du build courant. Une nouvelle version reste en attente : elle n’interrompt pas silencieusement une équation. Le bouton de mise à jour sauvegarde la partie avant le rechargement.
 
@@ -133,11 +145,12 @@ pnpm qa:gestures
 pnpm qa:polish
 pnpm qa:audio
 pnpm qa:mobile
+pnpm qa:systems
 ```
 
-Les tests Vitest couvrent les cas mathématiques de référence, les 72 résolutions complètes, 1 800 niveaux générés résolus, 1 200 transformations d’équivalence, les opérations interdites, l’annulation et la reconstruction des branches sauvegardées. Le scénario navigateur utilise uniquement les boutons réels : aucune commande de résolution n’est exposée par l’application.
+Les tests Vitest couvrent aussi les 21 systèmes résolus, les substitutions multiples, les combinaisons exactes et la reprise des nouveaux profils. Ils couvrent les cas mathématiques de référence, les 72 résolutions complètes, 1 800 niveaux générés résolus, 1 200 transformations d’équivalence, les opérations interdites, l’annulation et la reconstruction des branches sauvegardées. Le scénario navigateur utilise uniquement les boutons réels : aucune commande de résolution n’est exposée par l’application.
 
-Le script navigateur utilise Chrome installé sur macOS à son emplacement habituel. Adapter `executablePath` dans `scripts/browser-qa.mjs` pour un autre environnement. Les résultats détaillés et captures sont produits dans `test-results/` (exclus du dépôt). Voir [VALIDATION.md](VALIDATION.md) pour les mesures et la portée effective des essais.
+Les scripts de régression navigateur utilisent Chrome installé sur macOS à son emplacement habituel. Adapter `executablePath` dans `scripts/browser-qa.mjs` pour un autre environnement. Les résultats détaillés et captures sont produits dans `test-results/` (exclus du dépôt). Voir [VALIDATION.md](VALIDATION.md) pour les mesures et la portée effective des essais.
 
 ## Publication GitHub Pages
 
@@ -167,4 +180,4 @@ Le script de vérification publique compare les SHA-256 de chaque fichier servi 
 - Les essais mobiles utilisent les dimensions tactiles et le ralentissement CPU d’un navigateur de bureau. Ils ne remplacent pas une séance sur des appareils Android modestes et iOS réels.
 - Les identifiants de sélection sont des chemins dans l’AST. Une transformation efface la sélection et verrouille brièvement les entrées pour éviter les références périmées et les doubles applications.
 - Les identités proposées portent sur les expressions réelles de degré au plus 2, avec coefficients rationnels au départ. Les champs de racines sont bornés à 16 composantes pour préserver la réactivité. Les anciennes actions de factorisation globale et de discriminant restent lisibles uniquement pour rejouer les sauvegardes précédentes.
-- Les 72 niveaux constituent une campagne complète et finie ; davantage de séquences écrites, une révision espacée adaptative, le défi quotidien et un mode enseignant sont des évolutions distinctes, non annoncées comme présentes.
+- Les 72 niveaux d’équations et les 21 systèmes constituent deux progressions complètes et finies ; davantage de séquences écrites, une révision espacée adaptative, le défi quotidien et un mode enseignant sont des évolutions distinctes, non annoncées comme présentes.
