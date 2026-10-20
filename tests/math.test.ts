@@ -19,6 +19,19 @@ const cases: [
 ][] = [['x+3=8', 'S = { 5 }'], ['-2x=10', 'S = { −5 }'], ['3x+2=x+10', 'S = { 4 }'], ['2x+3=2x+8', 'S = ∅'], ['3x+3=3x+3', 'S = ℝ'], ['3(x-2)+5=2x+7', 'S = { 8 }'], ['x/3-x/2=1', 'S = { −6 }'], ['(x-2)(x+3)=0', 'S = { −3 ; 2 }'], ['(x-2)^2=0', 'S = { 2 }'], ['x^2+1=0', 'S = ∅'], ['2x^2-3x-2=0', 'S = { −1/2 ; 2 }'], ['x^2-2=0', 'S = { −√2 ; √2 }'], ['x^2+2x-1=0', 'S = { −1−√2 ; −1+√2 }'], ['x^2-4x+4=0', 'S = { 2 }']];
 for (const [source, result] of cases)
     it(`résout ${source}`, () => expect(solutionText(solve(equation(source)))).toBe(result));
+it('annule les facteurs négatifs des groupes quand les membres sont multipliés ou divisés', () => {
+    for (const kind of ['multiply', 'divide'] as const) for (const [source, expected] of [
+        ['-(x+2)=4', 'x + 2 = −4'],
+        ['-2(x+2)=-4', '2(x + 2) = 4'],
+        ['5-(x+2)=4', '−5 + x + 2 = −4'],
+        ['4=-(x+2)', '−4 = x + 2'],
+        ['-(x+2)/2=4', '1/2(x + 2) = −4'],
+    ]) {
+        const eq = equation(source), result = transform(eq, { kind, constant: rat(-1) }).equation;
+        expect(equationText(result)).toBe(expected);
+        expect(solutionKey(solve(result))).toBe(solutionKey(solve(eq)));
+    }
+});
 it('développe le moins devant une parenthèse', () => { const tr = transform(equation('-(x+2)=4'), { kind: 'expand', id: 'l' }); expect(equationText(tr.equation)).toBe('−x − 2 = 4'); });
 it('préserve les membres avec aperçu miroir', () => { const tr = transform(equation('3x-1=2x+7'), { kind: 'add', expression: parse('-2x') }); expect(equationText(tr.equation)).toBe('x − 1 = 7'); expect(tr.mirror).toContain('−2x'); });
 it('fusionne seulement une même somme', () => { const eq = equation('3x-2x+5=11'); expect(equationText(transform(eq, { kind: 'combine', ids: ['l.0', 'l.1'] }).equation)).toBe('x + 5 = 11'); expect(() => transform(eq, { kind: 'combine', ids: ['l.0', 'r'] })).toThrow(); expect(() => transform(eq, { kind: 'combine', ids: ['l.0', 'l.2'] })).toThrow(); });

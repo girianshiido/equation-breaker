@@ -74,12 +74,13 @@ Les rapports détaillés sont `test-results/gesture-report.json`, `test-results/
 
 - Typographie locale Outfit pour les expressions et DM Sans pour les textes ; aucune requête vers un service de polices à l’exécution. Licences OFL conservées.
 - Nouvelle présentation : membres côte à côte, labels hors de la ligne mathématique, termes sans cadres permanents. Trente contrôles d’alignement du signe égal sur six formats (320×568 à 1440×900), contrôle des polices effectivement chargées et des tailles homogènes des chiffres.
+- La touche × (−1) simplifie les facteurs des groupes : `−(x+2)=4` donne directement `x+2=−4`. Vérification dans les deux membres, avec facteurs négatifs, fractions, autres termes et reprise.
 - Les termes semblables gardent leur notation compacte pendant le dépôt : `2x + 3x`, puis `5x`, sans décomposition des coefficients en multiplications explicites.
 - Simplification après dépôt : délai de 380 ms avec animations, 180 ms sans. Mesure navigateur locale : environ 398 ms jusqu’au résultat réduit.
 - Sept bruitages originaux précalculés : 7 OGG/Opus et 7 MP3. Décodage réel des 14 fichiers, absence de saturation, déclenchement par un vrai glissement, quatre voix simultanées au maximum, bouton muet et paramètres synchronisés, repli MP3 forcé et lecture après rechargement hors ligne.
 - Saisie des constantes devant une parenthèse et des dénominateurs de groupes : `3(x+3)=6` devient `x+3=2` sans développement. `(x+4)/2=6` devient `x+4=12`. Tests des signes négatifs, de l’autre sens, des autres termes du membre, des fractions composées, de la reprise et de l’alternative au clavier. Le développement reste disponible, y compris pour une somme divisée par une constante.
-- 21 scénarios navigateur de gestes réussis, dont les appuis prolongés tactiles sur groupes à 320×568.
-- 121 tests Vitest réussis, dont les propriétés de ces facteurs sur 300 équations générées supplémentaires. Régression navigateur des 72 niveaux : 187 contrôles réussis, sans erreur JavaScript.
+- 22 scénarios navigateur de gestes réussis, dont les appuis prolongés tactiles sur groupes à 320×568.
+- 122 tests Vitest réussis, dont les propriétés de ces facteurs sur 300 équations générées supplémentaires. Régression navigateur des 72 niveaux : 187 contrôles réussis, sans erreur JavaScript.
 - Ralentissement CPU ×6, 30 sélections : médiane 16,8 ms, 95e percentile 18,6 ms, maximum 21,6 ms, pendant la passe locale complète. Aucun calcul audio par oscillateur pendant les gestes : buffers enregistrés et décodés une fois.
 
 Build final : environ 83 Ko de JavaScript et 51 Ko de CSS (42 Ko compressés ensemble), 69 Ko de polices et 49 Ko de sons dans les deux formats. Le dossier de publication occupe environ 324 Ko sur disque. Tous ces fichiers sont précachés pour le hors-ligne. Rapports : `polish-report.json`, `audio-report.json`, `gesture-report.json`, `browser-report.json` dans `test-results/`.

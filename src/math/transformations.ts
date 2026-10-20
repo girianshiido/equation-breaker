@@ -1,5 +1,5 @@
 import { squareCompletion } from './squares';
-import { gesturePlan, type DragAction } from './gestures';
+import { gesturePlan, scaleMember, type DragAction } from './gestures';
 import { type Equation, type Expr, c, x, sum, product, terms, nodeAt, replace } from './ast';
 import { type Rational, rat, add, neg, mul, div, zero, one, str } from './rational';
 import { normalize, fromPoly, monomial, mono, tidy, isZero, minus, same } from './normalize';
@@ -39,9 +39,6 @@ else {
     else
         tt[idx] = mono(q, m.degree);
 } return tt.length ? sum(...tt) : c(0); }
-function scaled(e: Expr, q: Rational): Expr { return sum(...terms(e).map(t => { const m = monomial(t); if (m)
-    return mono(mul(m.q, q), m.degree); if (one(q))
-    return t; return product(c(q), t); })); }
 export function factorable(e: Expr): Expr | null { if (e.kind !== 'sum')
     return null; const p = normalize(e); if (zero(p[2])) {
     if (zero(p[1]) || zero(p[0]) || one(p[1]))
@@ -132,7 +129,7 @@ export function transform(eq: Equation, a: Action): Transformation {
             if (one(a.constant))
                 throw Error('Avec 1, rien ne change. Choisis un autre nombre.');
             const q = a.kind === 'divide' ? div(rat(1), a.constant) : a.constant;
-            next = { left: scaled(eq.left, q), right: scaled(eq.right, q) };
+            next = { left: scaleMember(eq.left, q), right: scaleMember(eq.right, q) };
             mirror = `${a.kind === 'divide' ? '÷' : '×'} (${str(a.constant).replaceAll('-', '−')})`;
             label = `${a.kind === 'divide' ? 'Diviser' : 'Multiplier'} les deux membres par ${operandText(a.constant)}`;
             why = 'Multiplier ou diviser les deux membres par une constante non nulle est une opération réversible.';

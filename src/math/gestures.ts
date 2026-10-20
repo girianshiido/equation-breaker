@@ -49,7 +49,7 @@ export function groupedFactor(e: Expr): { q: Rational; base: Expr } | null {
     visit(e);
     return factors.length ? { q, base: product(...factors) } : null;
 }
-function scaleSource(e: Expr, q: Rational): Expr {
+export function scaleMember(e: Expr, q: Rational): Expr {
     return sum(...terms(e).flatMap(t => {
         const m = monomial(t);
         if (m) return [mono(mul(m.q, q), m.degree)];
@@ -88,7 +88,7 @@ export function gesturePlan(eq: Equation, id: string, part: Grip): GesturePlan {
         const value = gripValue(term, part);
         const dividing = part === 'coefficient';
         const scale = dividing ? div(rat(1), value) : value;
-        inFlightSource = scaleSource(origin, scale);
+        inFlightSource = scaleMember(origin, scale);
         rawTarget = dividing ? { kind: 'fraction', numerator: target, denominator: value } : { kind: 'product', factors: [c(value), target] };
         carried = c(value); arrived = carried;
         mirror = `${dividing ? '÷' : '×'} ${operandText(value)}`;
@@ -96,6 +96,6 @@ export function gesturePlan(eq: Equation, id: string, part: Grip): GesturePlan {
         why = `${dividing ? 'Chaque terme des deux membres est divisé' : 'Chaque terme des deux membres est multiplié'} par ${operandText(value)}, une constante non nulle. Pendant le trajet, le signe égal est suspendu : seule la transformation complète est validée.`;
     }
     const landing = withSides(source, inFlightSource, rawTarget);
-    const resultTarget = part === 'term' ? reduceTop(rawTarget) : scaleSource(target, part === 'coefficient' ? div(rat(1), gripValue(term, part)) : gripValue(term, part));
+    const resultTarget = part === 'term' ? reduceTop(rawTarget) : scaleMember(target, part === 'coefficient' ? div(rat(1), gripValue(term, part)) : gripValue(term, part));
     return { action: { kind: 'drag', id, part }, source, destination, inFlightSource, landing, result: withSides(source, inFlightSource, resultTarget), carried, arrived, mirror, label, why };
 }

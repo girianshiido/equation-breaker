@@ -77,6 +77,9 @@ try {
     await page.locator('#denominator').click(); await page.locator('#apply').click(); await done(); assert.equal(await text('.right-plate .blocks'), '15'); assert.equal((await text('.left-plate .blocks')).replaceAll(' ', ''), '2x−1');
     await page.locator('#undo').click(); await page.locator('[data-node="l"]').click(); await page.locator('#expand').click(); await done(); assert.ok(await page.locator('.left-plate .blocks .block').count()>1);
     check('Grouped fractions retain keyboard denominator and expansion alternatives');
+    await open('w3-5');await page.locator('#negate').click();await done();assert.equal((await text('.left-plate .blocks')).replaceAll(' ',''),'x+2');assert.equal(await text('.right-plate .blocks'),'−4');assert.equal(await text('#moves'),'1');
+    await page.reload();await page.locator('#resume').click();assert.equal((await text('.left-plate .blocks')).replaceAll(' ',''),'x+2');await begin('[data-node="l.1"]');await cross();await page.mouse.up();await done();await page.locator('#validate').click();assert.equal(await text('.result-solution'),'S = { −6 }');
+    check('Multiplying a negative group by −1 cancels signs, persists and permits full resolution');
     await open('w6-2');
     const squareStart = await center('[data-node="l.0"]'), linearEnd = await center('[data-node="l.1"]');
     await page.mouse.move(squareStart.x, squareStart.y); await page.mouse.down(); await page.waitForTimeout(460);
