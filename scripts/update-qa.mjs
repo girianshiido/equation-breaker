@@ -23,6 +23,22 @@ const url = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch({ headless: true, executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' });
 const page = await browser.newPage();
 try {
+    // Reproduce a cached HTML document whose entry files belong to the prior release.
+    const html = await readFile(join(dir,'index.html'),'utf8');
+    const legacyHtml = html.replace(/assets\/index-[\w-]+\.js/, 'assets/index-DjHfpqcI.js').replace(/assets\/index-[\w-]+\.css/, 'assets/index-B-vWpfkg.css');
+    const legacyContext = await browser.newContext({serviceWorkers:'block'});
+    const legacyPage = await legacyContext.newPage();
+    await legacyContext.route(url, route=>route.fulfill({contentType:'text/html',body:legacyHtml}));
+    await legacyPage.goto(url);await legacyPage.locator('#play').waitFor();
+    assert.ok(await legacyPage.locator('.app-shell').isVisible(), 'Prior HTML still loads its JS and CSS');
+    assert.notEqual(await legacyPage.locator('.skip').evaluate(el=>getComputedStyle(el).position),'static','Prior stylesheet is applied');
+    await legacyContext.close();
+    // A missing entry has a usable fallback instead of an empty page.
+    const failedContext = await browser.newContext({serviceWorkers:'block'});
+    await failedContext.route('**/assets/*.js',route=>route.abort());
+    const failedPage = await failedContext.newPage();await failedPage.goto(url);
+    assert.ok(await failedPage.getByRole('button',{name:'Recharger le jeu'}).isVisible());
+    await failedContext.close();
     await page.goto(url);
     await page.evaluate(async () => navigator.serviceWorker.ready);
     await page.reload();
@@ -30,7 +46,7 @@ try {
     await page.locator('#play').click();
     await page.locator('[data-node="l.1"]').click();
     await page.locator('#opposite').click();
-    await page.locator('#apply').click();
+    assert.equal(await page.locator('#dialog').evaluate(el=>el.open),false);
     await page.waitForFunction(() => document.querySelector('.game').getAttribute('aria-busy') === 'false');
     await writeFile(join(dir, 'sw.js'), (await readFile(join(dir, 'sw.js'), 'utf8')) + '\n// Test de mise à jour contrôlée.\n');
     await page.evaluate(async () => { const reg = await navigator.serviceWorker.getRegistration(); await reg.update(); });
@@ -45,8 +61,13 @@ try {
     assert.equal(await page.locator('#moves').innerText(), '1');
     await page.locator('#validate').click();
     assert.ok(await page.locator('.result-screen').isVisible());
+    await page.context().setOffline(true);await page.reload();await page.locator('#play').waitFor();
+    await page.locator('#play').click();assert.ok(await page.locator('.game').isVisible(),'Network-first navigation still works offline');
+    await page.context().setOffline(false);
+    const release=JSON.parse(await readFile(join(dir,'release.json'),'utf8'));
+    assert.ok(!release.files.includes('./assets/index-DjHfpqcI.js'),'Compatibility bundles are not precached');
     await mkdir('test-results', { recursive: true });
-    await writeFile('test-results/update-report.json', JSON.stringify({ passed: true, noSilentReload: true, resumedMoves: 1, solved: true }, null, 2));
+    await writeFile('test-results/update-report.json', JSON.stringify({ passed: true, noSilentReload: true, resumedMoves: 1, solved: true, staleHtmlRecovered: true, missingEntryFallback: true, offlineNavigation: true, noLegacyPrecache: true }, null, 2));
     console.log('Mise à jour en attente, reprise exacte et résolution : OK');
 }
 finally {

@@ -179,3 +179,11 @@ Contrôle visuel de cette présentation dans le navigateur intégré à une larg
 - Boutons « Cas 1 », « Cas 2 », sans équations : seul le numéro et une coche de validation restent affichés. Le cas actif est distingué visuellement et par aria-pressed ; la validation est annoncée dans son nom accessible.
 - Terminologie « cas » harmonisée dans les commandes, consignes, indices, titres des niveaux concernés et messages de validation. Les identifiants internes et le format des sauvegardes restent compatibles.
 - TypeScript strict, 150 tests et compilation réussis. Vérification dans le navigateur intégré avec une largeur de 360 px : navigation vers le second cas, résolution, validation, coche affichée et retour automatique au premier cas restant.
+
+
+## Récupération du démarrage après publication — 20 octobre 2026
+
+- Défaut confirmé : les fichiers JS/CSS de la version précédente répondaient 404 sur Pages après la publication suivante. Un HTML conservé par un cache HTTP, sans cache complet du service worker, peut alors afficher seulement le lien d’évitement.
+- Rétablissement des entrées publiées lors des douze dernières révisions. La compilation conserve désormais les anciennes entrées nommées par empreinte. Leur contenu reste inchangé ; seul le JS/CSS référencé par l’HTML courant est précaché (27 ressources, sans augmentation du cache hors ligne).
+- Navigation du nouveau service worker : page en ligne prioritaire, repli sur l’index précaché hors connexion. Aucun rechargement automatique d’une partie en cours. Écran initial lisible et bouton Recharger si le code principal ne peut pas être chargé ; aucune suppression de progression ou de paramètres.
+- TypeScript et deux compilations successives réussis, manifestes de cache identiques. Test navigateur dédié : HTML de la version précédente associé aux anciens fichiers rétablis, chargement JS et CSS confirmé ; échec du module simulé et bouton de secours visible ; mise à jour en attente sans interruption, reprise exacte d’un coup, résolution puis navigation hors ligne et nouvelle partie. Fichiers anciens exclus du précache vérifié.

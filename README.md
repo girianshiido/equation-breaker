@@ -157,6 +157,8 @@ git push
 node scripts/verify-public.mjs
 ```
 
+La compilation conserve les anciens fichiers JavaScript et CSS nommés par leur empreinte : une page HTML encore en cache continue ainsi à fonctionner après une publication. Ces fichiers de compatibilité ne sont pas précachés ; seul le jeu courant occupe le cache hors ligne. Les navigations en ligne privilégient la page publiée, avec repli sur le cache sans connexion. Un écran de chargement avec bouton de rechargement remplace la page vide si le démarrage échoue.
+
 Le script de vérification publique compare les SHA-256 de chaque fichier servi aux fichiers locaux. Une réussite locale ne constitue pas à elle seule une preuve de publication.
 
 ## Limites et évolutions
