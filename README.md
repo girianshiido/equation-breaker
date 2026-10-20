@@ -24,6 +24,10 @@ Douze succès, étoiles, records, indicateurs de maîtrise par compétence et ap
 
 La typographie des nombres utilise Outfit, associée à DM Sans pour les textes. Les deux polices sont intégrées localement, utilisables hors ligne et distribuées sous licence OFL (sources et licences dans `public/fonts/`). Les membres restent côte à côte sur téléphone, avec un signe égal centré sur les expressions.
 
+Sur téléphone, le surlignage natif du navigateur et les gestes de zoom sont désactivés. La sélection des termes du jeu, le défilement et les champs de saisie restent disponibles. Un deuxième doigt annule une manipulation en cours. **Valider reste accessible dans une barre fixe en bas de l’écran**, en portrait comme en paysage ; les écrans courts utilisent une présentation plus compacte.
+
+Les signes binaires sont centrés entre les termes, y compris pendant le dépôt (`2 + 4`). Un terme négatif conserve son signe dans le jeton transporté (`−7`, puis `7` après franchissement). Les produits numériques évitent les parenthèses superflues : `4 × 3`, `4 × (−3)`, `−3 × 4`.
+
 Les termes apparaissent sans cadres permanents. Leurs zones tactiles restent généreuses ; une sélection se souligne, et la zone de dépôt apparaît pendant le geste.
 
 Le bouton haut-parleur, en haut, active ou coupe les sons ; ce choix est conservé. Saisie, franchissement, dépôt, fusion et réussite ont des notes distinctes, courtes et douces. Les fichiers sont précalculés par `scripts/generate-sounds.py`, décodés une fois et limités à quatre voix simultanées.
@@ -116,6 +120,7 @@ pnpm qa:updates
 pnpm qa:gestures
 pnpm qa:polish
 pnpm qa:audio
+pnpm qa:mobile
 ```
 
 Les tests Vitest couvrent les cas mathématiques de référence, les 72 résolutions complètes, 1 800 niveaux générés résolus, 1 200 transformations d’équivalence, les opérations interdites, l’annulation et la reconstruction des branches sauvegardées. Le scénario navigateur utilise uniquement les boutons réels : aucune commande de résolution n’est exposée par l’application.

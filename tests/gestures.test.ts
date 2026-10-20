@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { equation, nodeAt } from '../src/math/ast';
+import { c, equation, nodeAt } from '../src/math/ast';
 import { gesturePlan, gripValue } from '../src/math/gestures';
 import { transform } from '../src/math/transformations';
 import { equationText, format } from '../src/math/format';
@@ -9,9 +9,25 @@ import { generated } from '../src/levels/generator';
 import { campaign } from '../src/levels/campaign';
 import { start, perform, undo } from '../src/gameplay/game';
 import { restore, snapshot } from '../src/app/persistence';
-import { blocks } from '../src/ui/math';
+import { blocks, math } from '../src/ui/math';
 
 describe('Manipulations progressives', () => {
+    it('réserve les parenthèses des produits numériques aux facteurs négatifs après le premier', () => {
+        for (const [a, b, expected] of [[4, 3, '4 × 3'], [4, -3, '4 × (−3)'], [-3, 4, '−3 × 4'], [-3, -4, '−3 × (−4)']] as const)
+            expect(math({ kind: 'product', factors: [c(a), c(b)] }, true)).toBe(expected);
+    });
+    it('sépare le signe visuel tout en transportant le terme signé', () => {
+        const p = gesturePlan(equation('x-4=2'), 'l.1', 'term');
+        expect(format(p.carried)).toBe('−4');expect(format(p.arrived)).toBe('4');
+        const html = blocks(p.landing.right, 'r', [], [], true);
+        expect(html).toContain('class="term-operator" aria-hidden="true">+</span>');
+        const negative = blocks(equation('5-x=3').left, 'l', [], []);
+        expect(negative).toContain('class="term-operator" aria-hidden="true">−</span>');
+        expect(negative).toContain('aria-label="−x, membre gauche"');
+        const revealed = blocks(equation('5-x=3').left, 'l', ['l.1'], []);
+        expect(revealed).toContain('class="term-operator" aria-hidden="true">+</span>');
+        expect(revealed).toContain('(−1)</span>');
+    });
     it('retire le terme choisi et inverse son signe sans toucher au modèle de départ', () => {
         const eq = equation('3x+5=-3'), before = equationText(eq), p = gesturePlan(eq, 'l.1', 'term');
         expect(format(p.inFlightSource)).toBe('3x');

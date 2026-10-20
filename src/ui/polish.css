@@ -128,3 +128,77 @@ button.primary:hover { background: #b0ffe4; }
 [data-contrast=true] .game .arena, [data-contrast=true] .context-panel { border-color: #7a929f; }
 :root[data-theme=blue] button.primary, :root[data-theme=rose] button.primary { background: var(--accent); border-color: var(--accent); }
 .game .arena { border-color: rgba(var(--accent-rgb), .33); }
+.term-unit { --operator-width: 22px; display: inline-flex; align-items: center; min-width: 0; max-width: 100%; }
+.term-unit.has-sign .block { max-width: calc(100% - var(--operator-width)); }
+.term-operator { flex: 0 0 var(--operator-width); width: var(--operator-width); display: inline-flex; align-items: center; justify-content: center; font: 450 clamp(20px, 2.5vw, 30px)/1 var(--math-font); color: #a1b9be; pointer-events: none; user-select: none; }
+@media (max-width: 700px) { .term-unit { --operator-width: 15px; } }
+
+/* Native selection and zoom are separate from algebraic selection. */
+[data-touch-ui=true], [data-touch-ui=true] body, [data-touch-ui=true] dialog {
+  touch-action: pan-x pan-y;
+}
+[data-touch-ui=true] body, [data-touch-ui=true] body * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+[data-touch-ui=true] input, [data-touch-ui=true] textarea, [data-touch-ui=true] [contenteditable=true], [data-touch-ui=true] [contenteditable=""] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+[data-touch-ui=true] input:not([type=checkbox]), [data-touch-ui=true] select, [data-touch-ui=true] textarea { font-size: 16px; }
+
+/* Validation stays within the visible screen, including short landscape views. */
+@media (max-width: 700px), (max-height: 500px) {
+  .game { padding-bottom: calc(82px + env(safe-area-inset-bottom)); }
+  .game .game-controls {
+    position: fixed;
+    z-index: 15;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 10px max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    border-top: 1px solid #54718e70;
+    background: #0d1b2c;
+    box-shadow: 0 -8px 22px #0002;
+    justify-content: center;
+    gap: 9px;
+  }
+  .game .game-controls .validate { margin-left: auto; height: 44px; min-height: 44px; line-height: 1; font-size: 13px; }
+  .game .game-controls .validate span { font-size: 20px; line-height: 1; }
+  .app-shell:has(.game) .footer { display: none; }
+  .game .game-notes { margin-top: 8px; }
+}
+@media (min-width: 481px) and (max-height: 500px) {
+  .app-shell:has(.game) .topbar { height: 48px; }
+  .app-shell:has(.game) .brand-mark { width: 31px; height: 31px; border-radius: 9px; font-size: 13px; }
+  .app-shell:has(.game) .brand-break { font-size: 11px; }
+  .app-shell:has(.game) .brand { font-size: 8px; }
+  .app-shell:has(.game) .desktop-nav button { font-size: 10px; }
+  .app-shell:has(.game) .top-tools .icon-button { width: 33px; min-height: 33px; height: 33px; }
+  .game { margin-top: 8px; }
+  .game .game-heading { min-height: 30px; gap: 10px; }
+  .game .game-heading h1 { font-size: 18px; }
+  .game .game-heading .eyebrow { font-size: 7px; }
+  .game .game-heading .icon-button, .game .game-heading .world-symbol { width: 32px; height: 32px; min-height: 32px; }
+  .game .mission { margin-top: 7px; padding: 3px 0 0; font-size: 10px; }
+  .game .game-meter { padding: 5px 0 7px; font-size: 8px; }
+  .game .arena { min-height: 105px; padding: 23px 8px 9px; }
+  .game .blocks { min-height: 60px; }
+  .game .equal-sign { height: 60px; min-height: 60px; }
+  .game .block { min-height: 48px; font-size: 30px; padding: 3px 5px; }
+  .game .block.group { font-size: 24px; }
+  .game .plate { padding-top: 3px; padding-bottom: 3px; }
+  .game .plate-label { top: -18px; height: 22px; min-height: 22px; font-size: 8px; }
+  .game .context-panel { margin-top: 10px; }
+}
+@media (max-width: 480px) and (max-height: 580px) {
+  .game .arena { min-height: 130px; }
+  .game .context-actions { min-height: 40px; padding-top: 5px; padding-bottom: 5px; }
+  .game .selection-help { font-size: 10px; }
+  .game .feedback { font-size: 10px; min-height: 30px; padding-top: 5px; padding-bottom: 3px; }
+  .game .operation-bar { padding-top: 7px; }
+  .game .game-controls .validate { min-height: 44px; }
+}

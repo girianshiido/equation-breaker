@@ -86,3 +86,15 @@ Les rapports détaillés sont `test-results/gesture-report.json`, `test-results/
 Build final : environ 83 Ko de JavaScript et 51 Ko de CSS (42 Ko compressés ensemble), 69 Ko de polices et 49 Ko de sons dans les deux formats. Le dossier de publication occupe environ 324 Ko sur disque. Tous ces fichiers sont précachés pour le hors-ligne. Rapports : `polish-report.json`, `audio-report.json`, `gesture-report.json`, `browser-report.json` dans `test-results/`.
 
 Essais réalisés sur Chrome/macOS avec formats mobiles, entrées tactiles et CPU ralenti. Aucun téléphone physique ni Safari n’a été utilisé.
+
+
+## Mise à jour 1.3 — 20 octobre 2026
+
+- Surlignage natif et menus de sélection désactivés sur les appareils à pointeur tactile principal. Les champs restent éditables et sélectionnables ; la sélection des termes du jeu reste active.
+- Gestes de zoom bloqués par la politique tactile, le viewport mobile et les événements de geste WebKit. Essais Chromium avec vrais doubles touchers et mouvements à deux doigts : échelle du viewport inchangée. Un deuxième doigt annule le glissement sans transformer l’équation. La loupe et les réglages d’accessibilité du système restent sous le contrôle de l’appareil.
+- Barre de validation fixe avec prise en compte des marges de sécurité. Vérification de la visibilité réelle et de la cible tactile de Valider, avant et après défilement, sur 320×480, 320×568, 360×640, 390×844, 568×320 et 844×390. En paysage court, l’en-tête est également compacté.
+- Signes binaires placés entre les termes : le modèle conserve le signe du terme déplacé. L’essai `x−4=2` montre un jeton `−4`, puis `4` et le calcul `2 + 4` avec un signe centré, avant `6`.
+- Produits numériques sans parenthèses autour des nombres positifs, ni autour du premier facteur négatif. Les parenthèses d’une somme et d’un facteur négatif suivant sont conservées.
+- 124 tests Vitest, 23 scénarios de gestes, 19 contrôles mobiles et passe de régression des commandes et dimensions. Rapports : `gesture-report.json`, `mobile-report.json`, `browser-quick-report.json`.
+
+Les gestes tactiles et mesures sont exécutés dans Chrome/macOS avec émulation mobile. Les événements WebKit sont vérifiés par émission d’événements annulables ; cela ne constitue pas un essai de Safari sur un iPhone réel. Android et iOS physiques restent à vérifier.

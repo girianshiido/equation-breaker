@@ -1,6 +1,6 @@
 {
   "name": "equation-breaker",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,7 +13,8 @@
     "qa:updates": "node scripts/update-qa.mjs",
     "qa:gestures": "node scripts/gesture-qa.mjs",
     "qa:polish": "node scripts/polish-qa.mjs",
-    "qa:audio": "node scripts/audio-qa.mjs"
+    "qa:audio": "node scripts/audio-qa.mjs",
+    "qa:mobile": "node scripts/mobile-qa.mjs"
   },
   "devDependencies": {
     "typescript": "~5.9.3",

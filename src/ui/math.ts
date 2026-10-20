@@ -1,5 +1,5 @@
-import { type Expr, terms } from '../math/ast';
-import { monomial } from '../math/normalize';
+import { type Expr, terms, c, product } from '../math/ast';
+import { monomial, mono } from '../math/normalize';
 import { groupedFactor } from '../math/gestures';
 import { neg, one, type Rational, str } from '../math/rational';
 import { escape, format, operandText } from '../math/format';
@@ -7,7 +7,10 @@ const fraction = (q: Rational) => q.d === 1n ? escape(String(q.n)) : `<span clas
 export function math(e: Expr, raw = false): string {
     const m = monomial(e);
     if (raw && e.kind === 'fraction') return `<span class="fraction"><span>${math(e.numerator)}</span><span>${escape(operandText(e.denominator))}</span></span>`;
-    if (raw && e.kind === 'product' && !m?.degree) return e.factors.map(f => `(${math(f)})`).join(' × ');
+    if (raw && e.kind === 'product' && !m?.degree) return e.factors.map((f, i) => {
+        const text = math(f);
+        return f.kind === 'sum' || (i > 0 && text.startsWith('−')) ? `(${text})` : text;
+    }).join(' × ');
     if (m) {
         const sign = m.q.n < 0n ? '−' : '', abs = m.q.n < 0n ? neg(m.q) : m.q;
         if (!m.degree) return sign + fraction(abs);
@@ -38,6 +41,12 @@ export function blocks(e: Expr, side: 'l' | 'r', selected: string[], highlight: 
     return terms(e).map((t, i) => {
         const id = e.kind === 'sum' ? `${side}.${i}` : side, m = monomial(t);
         const type = m ? (m.degree ? 'variable' : 'constant') : t.kind === 'fraction' ? 'rational' : 'group';
-        return `<button type="button" class="block ${type} ${selected.includes(id) ? 'selected' : ''} ${highlight.includes(id) ? 'hinted' : ''}" data-node="${id}" aria-pressed="${selected.includes(id)}" aria-label="${escape(format(t))}, membre ${side === 'l' ? 'gauche' : 'droit'}">${i && !format(t).startsWith('−') ? '<span class="term-plus">+</span>' : ''}${raw ? math(t, true) : interactiveTerm(t, selected.includes(id))}</button>`;
+        const group = m ? null : groupedFactor(t), q = m?.q ?? group?.q;
+        const negative = !!q && q.n < 0n;
+        const revealMinusOne = !raw && selected.includes(id) && negative && q!.n === -1n && !!(m?.degree || group);
+        const separateMinus = i > 0 && negative && !revealMinusOne;
+        const shown = separateMinus ? (m ? mono(neg(m.q), m.degree) : product(c(neg(group!.q)), group!.base)) : t;
+        const operator = i ? `<span class="term-operator" aria-hidden="true">${separateMinus ? '−' : '+'}</span>` : '';
+        return `<span class="term-unit ${i ? 'has-sign' : ''}">${operator}<button type="button" class="block ${type} ${selected.includes(id) ? 'selected' : ''} ${highlight.includes(id) ? 'hinted' : ''}" data-node="${id}" aria-pressed="${selected.includes(id)}" aria-label="${escape(format(t))}, membre ${side === 'l' ? 'gauche' : 'droit'}">${raw ? math(shown, true) : interactiveTerm(shown, selected.includes(id))}</button></span>`;
     }).join('');
 }

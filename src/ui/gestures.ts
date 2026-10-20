@@ -169,6 +169,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
     arena.addEventListener('lostpointercapture', () => { if (!finishing && (plan || rangeIds)) abort(); }, { signal: signal.signal });
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && (pointer || plan || rangeIds)) { event.preventDefault(); event.stopImmediatePropagation(); abort(); } }, { capture: true, signal: signal.signal });
     window.addEventListener('blur', () => { if (pointer || plan || rangeIds) abort(); }, { signal: signal.signal });
+    window.addEventListener('equation-multitouch', () => { if (pointer || plan || rangeIds) abort(); }, { signal: signal.signal });
     window.addEventListener('resize', () => { if (pointer || plan || rangeIds) abort(); }, { signal: signal.signal });
     document.addEventListener('visibilitychange', () => { if (document.hidden && (pointer || plan || rangeIds)) abort(); }, { signal: signal.signal });
     return () => { signal.abort(); cleanup(true); };
