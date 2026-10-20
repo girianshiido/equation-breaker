@@ -89,3 +89,13 @@ it('restaure les anciennes extractions symboliques sans imposer des portes nouve
  const old=snapshot(g,'campaign',0,0) as {events:Record<string,unknown>[]};delete old.events[0].exact;
  const recovered=restore(old)!.game;expect(recovered.s.branches).toHaveLength(0);expect(solutionKey(recovered.s.answer!)).toBe(solutionKey(solve(level.initial)));
 });
+
+it('groupe le contenu du carré et place toute la racine au numérateur du coefficient',()=>{
+    const eq=transform(equation('2x^2-3x-2=0'),{kind:'complete-square',ids:['l.0','l.1']}).equation;
+    const html=math(eq.left);
+    expect(html).toContain('class="math-group-content"');
+    expect(html).toContain('class="fraction scalar-fraction"><span>3<span class="radical"');
+    expect(html).toContain('class="math-fence"');
+    expect(html).not.toContain('·');
+    expect(html).not.toContain('class="paren"');
+});

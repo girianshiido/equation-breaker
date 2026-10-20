@@ -9,7 +9,7 @@ await context.addInitScript(() => {
     if (localStorage.getItem('gesture-fixture')) return;
     const results = {};
     for (let w = 1; w <= 6; w++) for (let n = 1; n <= 12; n++) results[`w${w}-${n}`] = { stars: 1, moves: 20, time: 50000, methods: [] };
-    localStorage.setItem('equation-breaker-v1', JSON.stringify({ version: 1, results, prefs: { motion: true }, active: null }));
+    localStorage.setItem('equation-breaker-v1', JSON.stringify({ version: 1, results, prefs: { motion: true, explainSteps:true }, active: null }));
     localStorage.setItem('gesture-fixture', '1');
 });
 const url = process.env.QA_URL || 'http://127.0.0.1:5194/';

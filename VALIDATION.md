@@ -162,3 +162,13 @@ Contrôle visuel de cette présentation dans le navigateur intégré à une larg
 - Passe navigateur complète : 190 contrôles réussis, dont les 72 niveaux avec les vrais boutons, les identités explicitement choisies, le facteur commun et une vraie séquence tactile émulée sur un coefficient irrationnel à 320×568. Aucune erreur JavaScript.
 - Passe ciblée après les derniers ajustements : 47 contrôles réussis, comprenant menu, gestes avec racines, reprise après rechargement, géométrie responsive, cache complet et résolution hors ligne. Sous CPU ×6 : médiane 16,5 ms, 95e percentile 18 ms et maximum 18,3 ms sur 30 sélections jusqu’à la prochaine image. Ces mesures restent des simulations sur ordinateur, sans téléphone physique.
 - Build final : environ 101 Ko de JavaScript et 58 Ko de CSS, soit environ 49 Ko compressés au total. Aucune dépendance de calcul ou de rendu ajoutée, aucune ressource distante à l’exécution.
+
+
+## Typographie cohérente et explications facultatives — 20 octobre 2026
+
+- Option « Expliquer chaque étape » désactivée par défaut, y compris lors de la lecture des anciennes sauvegardes. Une transformation choisie s’applique directement et compte un seul coup ; l’option rétablit l’aperçu avant application. Le bouton « Pourquoi ? » reste disponible. Choix conservé après rechargement et dans les exports.
+- Parenthèses vectorielles ajustées à la hauteur du contenu, carré regroupé en une expression et exposant placé en haut. Le coefficient −3√2/4 présente tout 3√2 au numérateur, sans multiplication développée inutile.
+- Fractions à la taille des termes voisins, sans réduction cumulative dans les racines. Deux lignes de hauteur égale placent la barre au centre, même lorsque le numérateur contient une racine ; les radicandes partagent la ligne de base du texte. Les racines gardent aussi la taille du texte dans les résultats.
+- Contrôle visuel dans le navigateur intégré du carré (√2x−3√2/4)² et de x/4+3=0, avec une partie à 320×568 et un agrandissement de la formule. Rendu confirmé par l’utilisateur. Validation toujours visible.
+- TypeScript strict et 150 tests automatiques réussis. Passe navigateur ciblée : 48 contrôles, aucune erreur JavaScript, gestes tactiles avec coefficient irrationnel, reprise, géométrie sur sept tailles, mode texte agrandi et fonctionnement hors ligne. Contrôles de taille identique du numérateur, dénominateur et texte voisin, centrage de la barre et hauteur des parenthèses.
+- CPU ×6 sur 30 sélections : médiane 16,6 ms, 95e percentile 17,8 ms, maximum 18,2 ms. Ces essais sont réalisés sur ordinateur avec émulation ; aucun téléphone physique n’est revendiqué.

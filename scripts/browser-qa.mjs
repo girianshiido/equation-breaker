@@ -82,18 +82,18 @@ try {
     await page.keyboard.press('Enter');
     await page.locator('#opposite').focus();
     await page.keyboard.press('Enter');
-    assert.match(await page.locator('.mirror-preview').innerText(), /−3/);
-    await page.locator('#apply').click();
+    assert.equal(await page.locator('#dialog').evaluate(el=>el.open),false);
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('equation-breaker-v1')).prefs.explainSteps),false);
     await page.waitForTimeout(230);
     await page.locator('#validate').click();
     assert.match(await page.locator('.result-solution').innerText(), /5/);
     assert.equal(await page.locator('.result-stars .stars').getAttribute('aria-label'), '3 étoiles sur 3');
-    report.push({ test: 'First level keyboard, mirror and reward', passed: true });
+    report.push({ test: 'First level keyboard, immediate action by default and reward', passed: true });
     await page.reload();
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('equation-breaker-v1')).results['w1-1'].stars), 3);
     // Seed only progression for comprehensive later-world UI coverage.
     await page.evaluate(ids => { const s = JSON.parse(localStorage.getItem('equation-breaker-v1')); for (const id of ids)
-        s.results[id] = { stars: 1, moves: 0, time: 0, methods: [] }; s.prefs.motion = false; s.active = null; localStorage.setItem('equation-breaker-v1', JSON.stringify(s)); }, plans.map(p => p.id));
+        s.results[id] = { stars: 1, moves: 0, time: 0, methods: [] }; s.prefs.motion = false; s.prefs.explainSteps = true; s.active = null; localStorage.setItem('equation-breaker-v1', JSON.stringify(s)); }, plans.map(p => p.id));
     await page.reload();
     // Each fixed level is completed by operating real UI, without an injected solver in the app.
     for (const plan of (process.env.QA_QUICK ? [] : plans)) {
@@ -131,6 +131,23 @@ try {
     await page.locator('#factor-common').click();await page.locator('#apply').click();await page.waitForFunction(()=>document.querySelector('.game')?.getAttribute('aria-busy')==='false');
     assert.match(await page.locator('[data-node="l"]').getAttribute('aria-label'),/3x.*x − 4/);
     report.push({test:'Common factor offers x and 3x as separate deliberate choices',passed:true});
+    // The optional explanation is off by default, persistent, and does not add a move.
+    await nav('settings');await page.locator('[data-pref="explainSteps"]').uncheck();await page.locator('#back-game').click();
+    await openLevel(plans.find(p=>p.id==='w6-4'));await select('l.0');await select('l.1');await page.locator('#complete-square').click();
+    await page.waitForFunction(()=>document.querySelector('.game')?.getAttribute('aria-busy')==='false');
+    assert.equal(await page.locator('#dialog').evaluate(el=>el.open),false);assert.equal(await page.locator('#moves').innerText(),'1');
+    assert.ok(await page.locator('.scalar-fraction .radical').count());
+    const fences=await page.locator('.written-square').first().evaluate(square=>{const group=square.querySelector('.math-group'),content=group.querySelector('.math-group-content').getBoundingClientRect(),fences=[...group.querySelectorAll(':scope > .math-fence')].map(e=>e.getBoundingClientRect());const parts=[...group.querySelectorAll('.scalar-fraction,.radical')].map(e=>e.getBoundingClientRect());return {content:{top:content.top,bottom:content.bottom,height:content.height},fences:fences.map(r=>({top:r.top,bottom:r.bottom,height:r.height})),parts:parts.map(r=>({top:r.top,bottom:r.bottom}))};});
+    assert.ok(fences.fences.every(f=>f.height>=fences.content.height-1));assert.ok(fences.parts.every(p=>p.top>=fences.fences[0].top-1&&p.bottom<=fences.fences[0].bottom+1));
+    const fractionLayout=await page.locator('.scalar-fraction').first().evaluate(f=>{const r=f.getBoundingClientRect(),n=f.children[0].getBoundingClientRect(),d=f.children[1].getBoundingClientRect();return {font:getComputedStyle(f).fontSize,base:getComputedStyle(f.closest('.math-group-content')).fontSize,numerator:getComputedStyle(f.children[0]).fontSize,denominator:getComputedStyle(f.children[1]).fontSize,axis:r.top+r.height/2,centres:(n.top+n.height/2+d.top+d.height/2)/2};});
+    assert.equal(fractionLayout.font,fractionLayout.base);assert.equal(fractionLayout.numerator,fractionLayout.base);assert.equal(fractionLayout.denominator,fractionLayout.base);assert.ok(Math.abs(fractionLayout.axis-fractionLayout.centres)<1);
+    await page.screenshot({path:'test-results/tall-square-parentheses.png'});
+    await page.reload();await page.locator('#resume').click();assert.equal(await page.locator('#moves').innerText(),'1');
+    await nav('settings');assert.equal(await page.locator('[data-pref="explainSteps"]').isChecked(),false);await page.locator('[data-pref="explainSteps"]').check();await page.locator('#back-game').click();
+    await page.locator('#undo').click();await select('l.0');await select('l.1');await page.locator('#complete-square').click();
+    assert.equal(await page.locator('#dialog').evaluate(el=>el.open),true);assert.equal(await page.locator('#moves').innerText(),'1');await page.locator('#cancel-preview').click();
+    await page.locator('#why').click();assert.match(await page.locator('#dialog-content').innerText(),/solutions|réels|réelle|ℝ/);await page.locator('#close-dialog').click();
+    report.push({test:'Optional explanations default off, direct one-move completion, tall fences, persistence, explicit preview on and Why available',passed:true});
     // Actual touch long press on an irrational coefficient in a prepared product branch.
     await page.setViewportSize({width:320,height:568});await openLevel(plans.find(p=>p.id==='w6-4'));
     for(const ev of plans.find(p=>p.id==='w6-4').events){if(ev.kind==='drag'&&ev.part==='algebraic-coefficient')break;await act(ev);}

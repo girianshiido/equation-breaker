@@ -90,3 +90,13 @@ it('masque les noms des membres par défaut et conserve le choix dans les sauveg
     expect(decode(JSON.stringify({ version: 1, prefs: { memberLabels: true } })).prefs.memberLabels).toBe(true);
     expect(decode(JSON.stringify({ version: 1, prefs: { memberLabels: 'oui' } })).prefs.memberLabels).toBe(false);
 });
+
+it('désactive les explications par défaut pour les profils neufs et anciens',()=>{
+    expect(fresh().prefs.explainSteps).toBe(false);
+    expect(decode(JSON.stringify({version:1,prefs:{sound:true}})).prefs).toMatchObject({sound:true,explainSteps:false});
+    expect(decode(JSON.stringify({version:1,prefs:{explainSteps:'oui'}})).prefs.explainSteps).toBe(false);
+});
+it('conserve le choix des explications dans les sauvegardes',()=>{
+    const s=fresh();s.prefs.explainSteps=true;expect(decode(JSON.stringify(s)).prefs.explainSteps).toBe(true);
+    s.prefs.explainSteps=false;expect(decode(JSON.stringify(s)).prefs.explainSteps).toBe(false);
+});

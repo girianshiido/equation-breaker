@@ -28,6 +28,8 @@ Sur téléphone, le surlignage natif du navigateur et les gestes de zoom sont d�
 
 Les signes binaires sont centrés entre les termes, y compris pendant le dépôt (`2 + 4`). Un terme négatif conserve son signe dans le jeton transporté (`−7`, puis `7` après franchissement). Les produits numériques évitent les parenthèses superflues : `4 × 3`, `4 × (−3)`, `−3 × 4`.
 
+Les fractions conservent la taille de caractères des termes voisins : numérateurs, dénominateurs et nombres entiers utilisent la même taille. Leurs barres et les opérateurs partagent le même axe ; les racines suivent la ligne du texte et les parenthèses s’étirent à la hauteur de leur contenu.
+
 Les termes apparaissent sans cadres permanents. Leurs zones tactiles restent généreuses ; une sélection se souligne, et la zone de dépôt apparaît pendant le geste.
 
 Le bouton haut-parleur, en haut, active ou coupe les sons ; ce choix est conservé. Saisie, franchissement, dépôt, fusion et réussite ont des notes distinctes, courtes et douces. Les fichiers sont précalculés par `scripts/generate-sounds.py`, décodés une fois et limités à quatre voix simultanées.
@@ -44,6 +46,8 @@ Le bouton haut-parleur, en haut, active ou coupe les sons ; ce choix est conserv
 - Lâcher hors de la zone, Échap, changement d’orientation ou interruption du geste : retour intégral à l’état d’origine, sans coup ni erreur supplémentaires.
 
 Un toucher court sélectionne un terme ; deux touchers sélectionnent des termes d’une même somme. Les boutons permettent fusion, développement et opérations libres. **Saisir le coefficient / le dénominateur** et **÷ / × aux deux membres** offrent une alternative complète au glissement, utilisable au clavier avec Tab puis Entrée/Espace. Les diviseurs négatifs sont parenthésés dans les écritures textuelles (`÷ (−3)`). Sous une barre de fraction, le dénominateur négatif est directement écrit `−3`.
+
+Les transformations s’appliquent directement au toucher. L’option **Expliquer chaque étape**, désactivée par défaut, rétablit l’aperçu explicatif avant application ; ce choix est conservé. Le bouton **Pourquoi ?** reste disponible à tout moment.
 
 ### Choisir une méthode
 
