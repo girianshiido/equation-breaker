@@ -65,28 +65,28 @@ export function perform(g: Game, event: Event): void {
         s.eq = s.branches[0];
         s.delta = false;
         s.answer = null;
-        s.label = s.branches.length === 1 ? 'Une seule porte : annuler le facteur' : 'Produit nul : ouvrir toutes les branches';
-        s.why = s.branches.length === 1 ? 'Un carré est nul si et seulement si sa base est nulle : X² = 0 ⇔ X = 0. Des facteurs ayant les mêmes zéros donnent une seule porte.' : 'AB = 0 ⇔ A = 0 ou B = 0. Chaque branche doit être résolue ; les solutions seront réunies.';
+        s.label = s.branches.length === 1 ? 'Un seul cas : annuler le facteur' : 'Produit nul : distinguer les cas';
+        s.why = s.branches.length === 1 ? 'Un carré est nul si et seulement si sa base est nulle : X² = 0 ⇔ X = 0. Des facteurs ayant les mêmes zéros donnent un seul cas.' : 'AB = 0 ⇔ A = 0 ou B = 0. Chaque cas doit être résolu ; les solutions seront réunies.';
     }
     else if (event.kind === 'branch') {
         if (!s.branches[event.index])
-            throw Error('Branche inexistante.');
+            throw Error('Cas inexistant.');
         s.branches[s.branch] = s.eq;
         s.branch = event.index;
         s.eq = s.branches[event.index];
         s.delta = false;
         s.answer = null;
-        s.label = `Explorer la porte ${event.index + 1}`;
-        s.why = 'Les solutions des branches seront réunies, jamais intersectées.';
+        s.label = `Explorer le cas ${event.index + 1}`;
+        s.why = 'Les solutions des cas seront réunies, jamais intersectées.';
     }
     else if (event.kind === 'confirm-branch') {
         if (s.branch < 0 || !terminal(s.eq))
-            throw Error('Isole x dans cette branche avant de la valider.');
+            throw Error('Isole x dans ce cas avant de le valider.');
         const solution = solve(s.eq);
         // Confirm equivalent doors together when replaying a save from an older version.
         s.branches.forEach((eq, i) => { if (solutionsEqual(solve(eq),solution)) s.completed[i] = solution; });
-        s.label = `Branche ${s.branch + 1} validée : ${solutionText(s.completed[s.branch]!)}`;
-        s.why = 'Explore les autres branches puis réunis leurs solutions.';
+        s.label = `Cas ${s.branch + 1} validé : ${solutionText(s.completed[s.branch]!)}`;
+        s.why = 'Explore les autres cas puis réunis leurs solutions.';
     }
     else if (event.kind === 'square-roots') {
         if (g.level.world < 4 || s.branches.length) throw Error('Isole un carré dans une équation du second degré.');
@@ -100,7 +100,7 @@ export function perform(g: Game, event: Event): void {
             s.branches=roots.map(right=>({left:square.base,right}));s.completed=roots.map(()=>null);s.branch=0;s.eq=s.branches[0];s.answer=null;
             s.label=`${format(square.base)} = ${format(root)}${roots.length===2?` ou ${format(square.base)} = −${format(root)}`:''}`;
         }else{s.answer=solve(s.eq);s.label='Construire les deux racines exactes';}
-        s.why='X² = k : si k = 0, une seule porte X = 0 ; si k > 0, X = √k ou X = −√k. Les racines et les fractions restent exactes.';
+        s.why='X² = k : si k = 0, un seul cas X = 0 ; si k > 0, X = √k ou X = −√k. Les racines et les fractions restent exactes.';
     }
     else if(event.kind==='no-real'){
         if(!positiveSquareSum(s.eq))throw Error('Il faut un carré plus une constante strictement positive, égal à zéro.');
@@ -124,9 +124,9 @@ export function perform(g: Game, event: Event): void {
     }
     else if (event.kind === 'collect') {
         if (!s.branches.length || s.completed.some(v => !v))
-            throw Error('Résous toutes les branches avant de réunir leurs solutions.');
+            throw Error('Résous tous les cas avant de réunir leurs solutions.');
         s.answer = union(s.completed as Solution[]);
-        s.label = 'Réunir les solutions des branches';
+        s.label = 'Réunir les solutions des cas';
         s.why = 'On prend l’union de toutes les solutions et on retire les doublons.';
     }
     else {
@@ -162,7 +162,7 @@ export function visibleBranchIndices(s: Snapshot): number[] {
 }
 export function validate(g: Game): 'branch' | 'win' {
     if (g.s.branches.length && !g.s.answer) {
-        if (!terminal(g.s.eq)) throw Error('Isole x dans cette branche avant de la valider.');
+        if (!terminal(g.s.eq)) throw Error('Isole x dans ce cas avant de le valider.');
         if (!g.s.completed[g.s.branch]) perform(g, { kind: 'confirm-branch' });
         const next = g.s.completed.findIndex(solution => !solution);
         if (next >= 0) {
@@ -174,7 +174,7 @@ export function validate(g: Game): 'branch' | 'win' {
     const s = g.s;
     if (!s.answer && !terminal(s.eq)) throw Error('L’équation est équivalente, mais pas encore résolue. Isole x ou construis l’ensemble des racines.');
     const answer = s.answer ?? solve(s.eq);
-    if (!solutionsEqual(answer,solve(g.level.initial))) throw Error('Il manque une solution. Vérifie toutes les branches.');
+    if (!solutionsEqual(answer,solve(g.level.initial))) throw Error('Il manque une solution. Vérifie tous les cas.');
     s.answer = answer; g.won = true; return 'win';
 }
 export function undo(g: Game): boolean { if (g.won || !g.history.length)
@@ -182,13 +182,13 @@ export function undo(g: Game): boolean { if (g.won || !g.history.length)
 export function score(g: Pick<Game, 'errors' | 'hints' | 'moves' | 'level'>): number { return g.errors === 0 && g.hints === 0 && g.moves <= g.level.budget ? 3 : g.errors <= 1 && g.hints <= 1 ? 2 : 1; }
 export function suggestion(g: Game): { text:string; action?:Event; ids?:string[] } {
     const {eq,branches,completed}=g.s;
-    if(branches.length&&completed.every(Boolean)&&!g.s.answer)return {text:'Toutes les portes sont résolues.',action:{kind:'collect'}};
-    if(branches.length&&completed[g.s.branch]){const index=completed.findIndex(s=>!s);if(index>=0)return{text:'Explore la prochaine porte.',action:{kind:'branch',index}};}
+    if(branches.length&&completed.every(Boolean)&&!g.s.answer)return {text:'Tous les cas sont résolus.',action:{kind:'collect'}};
+    if(branches.length&&completed[g.s.branch]){const index=completed.findIndex(s=>!s);if(index>=0)return{text:'Explore le prochain cas.',action:{kind:'branch',index}};}
     if(terminal(eq)||g.s.answer)return{text:'La forme de résolution est atteinte. Tu peux valider.'};
     if(g.level.world>=4&&!branches.length){
         if(positiveSquareSum(eq))return{text:'Un carré plus un nombre strictement positif ne peut pas être nul.',action:{kind:'no-real'}};
-        try{zeroBranches(eq);return{text:'Le produit est nul. Ouvre ses portes.',action:{kind:'split'}};}catch{/* Prepare the factors. */}
-        try{squareEquation(eq);return{text:'Le carré est isolé : utilise les deux signes, ou une seule porte pour zéro.',action:{kind:'square-roots'}};}catch{/* Prepare the square. */}
+        try{zeroBranches(eq);return{text:'Le produit est nul. Distingue les cas.',action:{kind:'split'}};}catch{/* Prepare the factors. */}
+        try{squareEquation(eq);return{text:'Le carré est isolé : utilise les deux signes, ou un seul cas pour zéro.',action:{kind:'square-roots'}};}catch{/* Prepare the square. */}
     }
     const lp=exactPoly(eq.left),rp=exactPoly(eq.right),quadratic=!sZero(lp[2])||!sZero(rp[2]);
     const idsFor=(side:'l'|'r',e:Expr)=>terms(e).map((_,i)=>e.kind==='sum'?`${side}.${i}`:side);

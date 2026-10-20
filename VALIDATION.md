@@ -172,3 +172,10 @@ Contrôle visuel de cette présentation dans le navigateur intégré à une larg
 - Contrôle visuel dans le navigateur intégré du carré (√2x−3√2/4)² et de x/4+3=0, avec une partie à 320×568 et un agrandissement de la formule. Rendu confirmé par l’utilisateur. Validation toujours visible.
 - TypeScript strict et 150 tests automatiques réussis. Passe navigateur ciblée : 48 contrôles, aucune erreur JavaScript, gestes tactiles avec coefficient irrationnel, reprise, géométrie sur sept tailles, mode texte agrandi et fonctionnement hors ligne. Contrôles de taille identique du numérateur, dénominateur et texte voisin, centrage de la barre et hauteur des parenthèses.
 - CPU ×6 sur 30 sélections : médiane 16,6 ms, 95e percentile 17,8 ms, maximum 18,2 ms. Ces essais sont réalisés sur ordinateur avec émulation ; aucun téléphone physique n’est revendiqué.
+
+
+## Navigation par cas — 20 octobre 2026
+
+- Boutons « Cas 1 », « Cas 2 », sans équations : seul le numéro et une coche de validation restent affichés. Le cas actif est distingué visuellement et par aria-pressed ; la validation est annoncée dans son nom accessible.
+- Terminologie « cas » harmonisée dans les commandes, consignes, indices, titres des niveaux concernés et messages de validation. Les identifiants internes et le format des sauvegardes restent compatibles.
+- TypeScript strict, 150 tests et compilation réussis. Vérification dans le navigateur intégré avec une largeur de 360 px : navigation vers le second cas, résolution, validation, coche affichée et retour automatique au premier cas restant.

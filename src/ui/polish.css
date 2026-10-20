@@ -71,7 +71,7 @@ button.primary:hover { background: #b0ffe4; }
 .game-controls { padding-top: 16px; border-top-color: #54718e32; gap: 11px; }
 .game .validate { min-width: 166px; min-height: 49px; border-radius: 13px; }
 .game-notes { color: #829aaa; }
-.branches button { border-radius: 12px; }
+.branches button { border-radius:12px; min-height:44px; padding:8px 15px; font-size:14px; }
 .drag-token { font: 500 35px/1.15 var(--math-font); color: #f5e1b6; background: #132e35ee; border: 1px solid #8fd9cd38; border-radius: 14px; box-shadow: 0 6px 22px #0004; padding: 9px 14px; }
 .gesture-caption { font-family: 'DM Sans', sans-serif; color: #c6d5cc; }
 .equal-suspended { font: 450 32px var(--math-font); color: #dabd85; }
