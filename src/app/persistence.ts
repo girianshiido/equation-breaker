@@ -18,6 +18,7 @@ export interface Preferences {
     large: boolean;
     lite: boolean;
     timer: boolean;
+    memberLabels: boolean;
     theme: 'mint' | 'blue' | 'rose';
 }
 export interface Stats {
@@ -49,7 +50,7 @@ export interface Save {
     active: unknown;
     arcadeBest: number;
 }
-export function fresh(): Save { return { version: 1, results: {}, prefs: { sound: false, motion: !matchReduced(), contrast: false, large: false, lite: false, timer: false, theme: 'mint' }, stats: { wins: 0, clean: 0, moves: 0, errors: 0, hints: 0, expanded: 0, combined: 0, none: 0, all: 0, products: 0, fractions: 0, quadratics: 0, fast: 0, skills: Array.from({ length: 6 }, () => ({ wins: 0, errors: 0, hints: 0, transfer: 0 })) }, active: null, arcadeBest: 0 }; }
+export function fresh(): Save { return { version: 1, results: {}, prefs: { sound: false, motion: !matchReduced(), contrast: false, large: false, lite: false, timer: false, memberLabels: false, theme: 'mint' }, stats: { wins: 0, clean: 0, moves: 0, errors: 0, hints: 0, expanded: 0, combined: 0, none: 0, all: 0, products: 0, fractions: 0, quadratics: 0, fast: 0, skills: Array.from({ length: 6 }, () => ({ wins: 0, errors: 0, hints: 0, transfer: 0 })) }, active: null, arcadeBest: 0 }; }
 const matchReduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const object = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const count = (v: unknown, max = 1e8): number => typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : 0;
@@ -65,7 +66,7 @@ export function decode(raw: string | null): Save { const s = fresh(); if (!raw)
                 s.results[l.id] = { stars: count(r.stars, 3), moves: count(r.moves), time: count(r.time), methods: Array.isArray(r.methods) ? r.methods.filter((x): x is string => typeof x === 'string' && x.length < 500).slice(0, 3) : [] };
         }
     if (object(v.prefs)) {
-        for (const k of ['sound', 'motion', 'contrast', 'large', 'lite', 'timer'] as const)
+        for (const k of ['sound', 'motion', 'contrast', 'large', 'lite', 'timer', 'memberLabels'] as const)
             if (typeof v.prefs[k] === 'boolean')
                 s.prefs[k] = v.prefs[k];
         if (['mint', 'blue', 'rose'].includes(String(v.prefs.theme)))

@@ -29,7 +29,7 @@ async function openLevel(plan) { await nav('worlds'); await page.locator(`[data-
 async function select(id) { const nodes = page.locator(`[data-node="${id}"]`); if (await nodes.count())
     await nodes.click();
 else
-    await page.locator(`[data-whole="${id}"]`).click(); }
+    { await page.locator(`[data-whole="${id}"]`).focus(); await page.keyboard.press('Enter'); } }
 async function operation(kind, value) { await page.locator('#operation').click(); await page.locator('#op-kind').selectOption(kind); await page.locator('#operand').fill(value); await page.locator('#operation-form button[type=submit]').click(); }
 async function act(ev) { if (['add', 'divide', 'multiply'].includes(ev.kind)) {
     await operation(ev.kind, ev.value);

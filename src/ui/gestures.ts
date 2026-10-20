@@ -11,6 +11,7 @@ interface Options {
     allowed: () => boolean;
     motion: () => boolean;
     onSound: (cue: 'lift' | 'cross' | 'drop' | 'cancel') => void;
+    onLayout: () => void;
     onPick: (grip: PickedGrip) => void;
     onSelect: (ids: string[]) => void;
     onCommit: (action: DragAction) => void;
@@ -51,6 +52,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         finishing = false; rangeIds = null; arena.querySelectorAll('.range-selected').forEach(el => el.classList.remove('range-selected')); plan = null; ghost?.remove(); ghost = null; caption.textContent = '';
         arena.classList.remove('in-transit', 'landing', 'drop-accepted', 'range-selecting');
         arena.querySelectorAll('.plate').forEach(el => el.classList.remove('drop-target', 'drop-over'));
+        if (restore) options.onLayout();
         setLocked(false); const current = pointer; pointer = null;
         if (current && arena.hasPointerCapture(current.id)) arena.releasePointerCapture(current.id);
     }
@@ -70,6 +72,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         const source = plan.source === 'l' ? left : right;
         source.innerHTML = blocks(plan.inFlightSource, plan.source, [], []);
         equal.innerHTML = '<span class="equal-suspended">⋯</span>'; equal.setAttribute('aria-label', 'Transformation en cours : égalité suspendue');
+        options.onLayout();
         const dest = arena.querySelector<HTMLElement>(plan.destination === 'l' ? '.left-plate' : '.right-plate')!;
         dest.classList.add('drop-target');
         destRect = dest.getBoundingClientRect(); separatorRect = equal.getBoundingClientRect();
@@ -157,6 +160,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         left.innerHTML = blocks(committed.landing.left, 'l', [], [], committed.destination === 'l');
         right.innerHTML = blocks(committed.landing.right, 'r', [], [], committed.destination === 'r');
         equal.innerHTML = '='; equal.setAttribute('aria-label', 'égal à');
+        options.onLayout();
         caption.textContent = `${committed.mirror} sur les deux membres · réduction`;
         // Reading time remains available with reduced motion; only the visual effects disappear.
         timer = window.setTimeout(() => {

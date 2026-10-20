@@ -38,7 +38,7 @@ try {
     assert.ok(await page.locator('.game').isVisible(), 'No automatic reload during a level');
     assert.equal(await page.locator('#moves').innerText(), '1');
     await page.waitForTimeout(100);
-    await page.locator('[data-whole="l"]').click();
+    await page.locator('[data-screen="settings"]').click();
     await page.locator('#update').waitFor();
     await Promise.all([page.waitForNavigation(), page.locator('#update').click()]);
     await page.locator('#resume').click();

@@ -115,3 +115,19 @@ Le signe binaire et le moins unaire utilisent désormais la même police, la mê
 Le jeton `−3` et le dénominateur d’une fraction verticale provisoire sont écrits sans parenthèses. La barre de fraction sépare déjà les opérandes ; les parenthèses sont conservées dans les libellés textuels de division `÷ (−3)`. Cas de référence : `−3x=4`, dépôt affichant 4 sur −3.
 
 Vérification finale de ces ajustements : 125 tests automatiques, 34 contrôles mobiles, 23 scénarios de gestes et 43 contrôles de régression navigateur réussis.
+
+
+## Noms des membres facultatifs — 20 octobre 2026
+
+Nouvelle préférence « Afficher les noms des membres », désactivée par défaut pour les nouvelles progressions comme pour les anciennes sauvegardes dépourvues de cette préférence. Activés, les libellés sont centrés au-dessus des deux membres. Désactivés, leurs commandes restent présentes pour les lecteurs d’écran et deviennent visibles au focus clavier. Les marges de l’arène restent symétriques.
+
+126 tests automatiques, dont la valeur par défaut, la migration implicite et le décodage du nouveau choix. Le parcours mobile contrôle l’activation, le centrage, la conservation après rechargement, la désactivation et la sélection de tout le membre par Entrée, sans transformation de l’équation.
+
+
+## Taille commune adaptée à l’équation — 20 octobre 2026
+
+La taille est mesurée à l’affichage, au redimensionnement et lors des étapes de geste qui changent le contenu. Les deux membres et les opérateurs utilisent un facteur commun ; une simplification libérant de la place restaure une taille plus grande, plafonnée à la taille normale de l’écran. Aucune mesure de texte n’est effectuée dans les mouvements de pointeur. La taille minimale est de 16 px (20 px en texte agrandi). Si une expression reste trop large à ce seuil, le repli à la ligne reste possible et une indication propose la rotation du téléphone.
+
+Essai dédié à 320×568 sur `3(x−2)+5=2x+7` : taille commune réduite, puis agrandissement après saisie du coefficient 3 et après passage en paysage. Contrôle des étapes provisoires et du dépôt avec la géométrie recalculée avant de déterminer la cible.
+
+Contrôle visuel de cette présentation dans le navigateur intégré à une largeur de 320 px ; un passage regroupé Chrome a validé 28 scénarios de gestes, dont la taille commune et son agrandissement. Aucun appareil physique n’est revendiqué pour ces essais.

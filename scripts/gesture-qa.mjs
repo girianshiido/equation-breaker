@@ -84,6 +84,12 @@ try {
     await open('w3-5');await page.locator('#negate').click();await done();assert.equal((await text('.left-plate .blocks')).replaceAll(' ',''),'x+2');assert.equal(await text('.right-plate .blocks'),'−4');assert.equal(await text('#moves'),'1');
     await page.reload();await page.locator('#resume').click();assert.equal((await text('.left-plate .blocks')).replaceAll(' ',''),'x+2');await begin('[data-node="l.1"]');await cross();await page.mouse.up();await done();await page.locator('#validate').click();assert.equal(await text('.result-solution'),'S = { −6 }');
     check('Multiplying a negative group by −1 cancels signs, persists and permits full resolution');
+    await page.setViewportSize({width:320,height:568});await open('w3-2');
+    const fontSize=()=>page.locator('.left-plate .block').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize));const beforeFit=await fontSize();assert.ok(beforeFit>=16&&beforeFit<27);
+    const fitState=await page.evaluate(()=>[...document.querySelectorAll('.blocks .block')].map(e=>parseFloat(getComputedStyle(e).fontSize)));assert.ok(fitState.every(n=>Math.abs(n-beforeFit)<.1));
+    await begin('[data-node="l.0"] [data-grip="coefficient"]',true);const duringFit=await fontSize();assert.ok(duringFit>beforeFit);await cross();await page.mouse.up();await done();assert.ok(await fontSize()>=beforeFit);assert.equal(await text('#moves'),'1');
+    await page.setViewportSize({width:844,height:390});await page.waitForFunction(n=>parseFloat(getComputedStyle(document.querySelector('.left-plate .block')).fontSize)>=n,duringFit);await page.setViewportSize({width:390,height:844});
+    check('One shared font shrinks for a long member and grows when a factor is removed or the viewport widens');
     await open('w6-2');
     const squareStart = await center('[data-node="l.0"]'), linearEnd = await center('[data-node="l.1"]');
     await page.mouse.move(squareStart.x, squareStart.y); await page.mouse.down(); await page.waitForTimeout(460);
@@ -124,6 +130,7 @@ try {
     await begin('[data-node="l.0"]', true); await page.keyboard.press('Escape'); await page.mouse.up(); assert.match(await text('.left-plate .blocks'), /2\s*x.*3/); assert.equal(await text('#moves'), '0');
     await begin('[data-node="l.1"]'); await page.setViewportSize({ width: 430, height: 932 }); await page.mouse.up(); assert.equal(await text('#moves'), '0'); assert.match(await text('.left-plate .blocks'), /2\s*x.*3/);
     check('Escape and orientation change cancel the gesture completely');
+    for(const id of ['w3-4','w3-10','w4-6','w6-2']) {await page.setViewportSize({width:320,height:568});await open(id);const r=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,scale:parseFloat(document.querySelector('#arena').style.getPropertyValue('--equation-scale')),sizes:[...document.querySelectorAll('.blocks .block')].map(e=>parseFloat(getComputedStyle(e).fontSize))}));assert.ok(r.scroll<=r.width+1);assert.ok(r.sizes.every(n=>n>=15.9));check(`Long equation stays within the viewport at a readable size ${id}`);}
     await open('w1-5'); await cdp.send('Emulation.setCPUThrottlingRate', { rate: 6 }); await begin('[data-node="l.1"]');
     const samples = []; for (let i = 0; i < 20; i++) { const started = performance.now(); await cross(i % 2 ? 'right' : 'left'); samples.push(performance.now() - started); }
     await page.mouse.move(3, 3); await page.mouse.up(); await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });

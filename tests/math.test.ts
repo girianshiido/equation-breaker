@@ -83,3 +83,10 @@ it('restaure les branches validées et leur union à chaque étape', () => { con
     }
 } expect(g.won).toBe(true); });
 it('les radicaux restent exacts après changement de coefficient', () => { const e = equation('x^2+2x-1=0'); const scaled = transform(e, { kind: 'multiply', constant: rat(-7, 3) }); expect(solutionKey(solve(scaled.equation))).toBe(solutionKey(solve(e))); });
+
+it('masque les noms des membres par défaut et conserve le choix dans les sauvegardes', () => {
+    expect(fresh().prefs.memberLabels).toBe(false);
+    expect(decode(JSON.stringify({ version: 1, prefs: { sound: true } })).prefs).toMatchObject({ sound: true, memberLabels: false });
+    expect(decode(JSON.stringify({ version: 1, prefs: { memberLabels: true } })).prefs.memberLabels).toBe(true);
+    expect(decode(JSON.stringify({ version: 1, prefs: { memberLabels: 'oui' } })).prefs.memberLabels).toBe(false);
+});
