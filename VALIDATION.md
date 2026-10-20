@@ -140,3 +140,10 @@ Contrôle visuel de cette présentation dans le navigateur intégré à une larg
 - TypeScript strict et 133 tests automatiques réussis, dont les 72 niveaux résolus avec la progression automatique.
 - 32 scénarios navigateur de gestes réussis : produit nul et carré complété sans navigation manuelle entre portes ni clic supplémentaire pour réunir ; coefficient rationnel complet, annulation, clavier, reprise et vraie séquence d’entrée tactile émulée à 320×568. Régression des gestes existants et mouvements sous CPU ×6. Aucune erreur JavaScript.
 - Contrôle visuel supplémentaire dans le navigateur intégré, à 320 px : appui long sur x reconnaissant le coefficient complet et bouton Valider visible. Les essais tactiles restent des simulations sur navigateur de bureau ; aucun téléphone physique n’a été utilisé.
+
+## Une seule porte pour un carré nul — 20 octobre 2026
+
+- `(x−2)²=0` ouvre directement l’unique équation `x−2=0`. Les facteurs ayant les mêmes zéros sont regroupés ; deux facteurs distincts restent deux portes. La règle `X²=0 ⇔ X=0` est indiquée dans la commande et l’explication.
+- 135 tests automatiques réussis : carrés nuls à gauche et à droite, facteurs répétés ou proportionnels, facteur constant non nul, conservation de deux racines distinctes, annulation et restauration. Les 72 niveaux restent résolubles.
+- Les anciens événements d’ouverture sont rejoués selon leur structure d’origine pour préserver les parties sauvegardées ; une seule porte représentative est affichée et les portes équivalentes sont validées ensemble. Une ancienne partie située sur la seconde porte dupliquée a été reprise et terminée dans les tests.
+- Parcours vérifié dans le navigateur intégré à 320×568 : une seule porte affichée, résolution `x=2`, un seul clic Valider et écran de réussite `S={2}` avec Continuer visible. Aucun Chrome lancé pour cet essai.

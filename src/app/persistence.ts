@@ -114,7 +114,7 @@ export function persist(s: Save): boolean { try {
 catch {
     return false;
 } }
-function eventJSON(e: Event): unknown { if (e.kind === 'add')
+function eventJSON(e: Event): unknown { if (e.kind === 'split') return { kind: e.kind, distinct: e.distinct !== false }; if (e.kind === 'add')
     return { kind: e.kind, expression: format(e.expression).replaceAll('−', '-') }; if (e.kind === 'divide' || e.kind === 'multiply')
     return { kind: e.kind, constant: str(e.constant) }; return e; }
 function eventRead(v: unknown): Event { if (!object(v))
@@ -122,7 +122,7 @@ function eventRead(v: unknown): Event { if (!object(v))
     return { kind, expression: parse(v.expression) }; if ((kind === 'divide' || kind === 'multiply') && typeof v.constant === 'string')
     return { kind, constant: readRational(v.constant) }; if ((kind === 'expand' || kind === 'factor' || kind === 'simplify') && typeof v.id === 'string' && /^[lr](\.\d+)*$/.test(v.id))
     return { kind, id: v.id }; if ((kind === 'combine' || kind === 'complete-square') && Array.isArray(v.ids) && v.ids.length === 2 && v.ids.every(id => typeof id === 'string' && /^[lr](\.\d+)*$/.test(id)))
-    return { kind, ids: v.ids as string[] }; if (['split', 'delta', 'roots', 'collect', 'confirm-branch', 'square-roots'].includes(String(kind)))
+    return { kind, ids: v.ids as string[] }; if (kind === 'split') return { kind, distinct: v.distinct === true }; if (['delta', 'roots', 'collect', 'confirm-branch', 'square-roots'].includes(String(kind)))
     return { kind } as Event; if (kind === 'branch' && typeof v.index === 'number' && Number.isInteger(v.index))
     return { kind, index: v.index }; throw Error('Étape inconnue'); }
 export function snapshot(g: Game, mode: string, arcade: number, combo: number): unknown { return { level: g.level.id, world: g.level.world, seed: g.level.seed, events: g.events.map(eventJSON), completed: g.s.completed.map(s => Boolean(s)), moves: g.moves, errors: g.errors, hints: g.hints, elapsed: g.elapsed + Date.now() - g.started, mode, arcade, combo }; }

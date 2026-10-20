@@ -9,6 +9,7 @@ import { equationText } from '../math/format';
 import type { Level } from '../levels/campaign';
 export type Event = Action | { kind: 'square-roots' } | {
     kind: 'split';
+    distinct?: boolean;
 } | {
     kind: 'branch';
     index: number;
@@ -57,14 +58,14 @@ export function perform(g: Game, event: Event): void {
     if (event.kind === 'split') {
         if (g.level.world < 4 || s.branches.length)
             throw Error('Le produit nul n’est pas disponible ici.');
-        s.branches = zeroBranches(s.eq);
+        s.branches = zeroBranches(s.eq, event.distinct !== false);
         s.completed = s.branches.map(() => null);
         s.branch = 0;
         s.eq = s.branches[0];
         s.delta = false;
         s.answer = null;
-        s.label = 'Produit nul : ouvrir toutes les branches';
-        s.why = 'AB = 0 ⇔ A = 0 ou B = 0. Chaque branche doit être résolue ; les solutions seront réunies.';
+        s.label = s.branches.length === 1 ? 'Une seule porte : annuler le facteur' : 'Produit nul : ouvrir toutes les branches';
+        s.why = s.branches.length === 1 ? 'Un carré est nul si et seulement si sa base est nulle : X² = 0 ⇔ X = 0. Des facteurs ayant les mêmes zéros donnent une seule porte.' : 'AB = 0 ⇔ A = 0 ou B = 0. Chaque branche doit être résolue ; les solutions seront réunies.';
     }
     else if (event.kind === 'branch') {
         if (!s.branches[event.index])
@@ -80,7 +81,9 @@ export function perform(g: Game, event: Event): void {
     else if (event.kind === 'confirm-branch') {
         if (s.branch < 0 || !terminal(s.eq))
             throw Error('Isole x dans cette branche avant de la valider.');
-        s.completed[s.branch] = solve(s.eq);
+        const solution = solve(s.eq), key = solutionKey(solution);
+        // Confirm equivalent doors together when replaying a save from an older version.
+        s.branches.forEach((eq, i) => { if (solutionKey(solve(eq)) === key) s.completed[i] = solution; });
         s.label = `Branche ${s.branch + 1} validée : ${solutionText(s.completed[s.branch]!)}`;
         s.why = 'Explore les autres branches puis réunis leurs solutions.';
     }
@@ -142,6 +145,15 @@ export function perform(g: Game, event: Event): void {
         g.expanded++;
     if (event.kind === 'combine')
         g.combined++;
+}
+/** Keep the active representative when replaying an older save with duplicate doors. */
+export function visibleBranchIndices(s: Snapshot): number[] {
+    const representatives = new Map<string, number>();
+    s.branches.forEach((eq, i) => {
+        const key = solutionKey(solve(eq));
+        if (!representatives.has(key) || i === s.branch) representatives.set(key, i);
+    });
+    return [...representatives.values()];
 }
 export function validate(g: Game): 'branch' | 'win' {
     if (g.s.branches.length && !g.s.answer) {

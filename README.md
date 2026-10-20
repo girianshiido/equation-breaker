@@ -49,6 +49,8 @@ Un toucher court sélectionne un terme ; deux touchers sélectionnent des termes
 
 Les parenthèses se développent, les trinômes se factorisent et les produits nuls ouvrent des branches. Le déplacement n’est pas imposé comme méthode universelle.
 
+Un carré nul ne crée qu’une porte : `(x−2)² = 0 ⇔ x−2 = 0`. Les facteurs ayant les mêmes zéros sont regroupés ; les facteurs distincts restent séparés.
+
 La validation d’une porte ouvre automatiquement la prochaine porte inachevée. La validation de la dernière réunit les solutions sans doublon et termine l’équation. Ce parcours s’applique aussi aux branches obtenues par extraction des racines d’un carré, y compris lorsqu’une seule racine existe.
 
 Dans le monde 6, maintenir le doigt sur **x²**, puis le faire glisser sur le terme en **x**, surligne le groupe. On peut aussi sélectionner les deux termes par touchers courts ou au clavier. **Compléter le carré** indique la quantité exacte ajoutée aux deux membres et montre un aperçu : pour `x² − 5x`, il faut ajouter **25/4**, et non 5/4. Les autres termes de la somme restent présents. Un coefficient de x² différent de 1 doit d’abord être ramené à 1 par division des deux membres.

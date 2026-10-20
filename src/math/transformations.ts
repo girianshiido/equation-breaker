@@ -146,13 +146,18 @@ export function transform(eq: Equation, a: Action): Transformation {
             throw Error('Les coefficients deviennent trop grands pour cette arène. Annule ou simplifie.');
     return { equation: next, why, label, mirror };
 }
-export function zeroBranches(eq: Equation): Equation[] { let e: Expr; if (isZero(eq.right))
+export function zeroBranches(eq: Equation, distinct = true): Equation[] { let e: Expr; if (isZero(eq.right))
     e = eq.left;
 else if (isZero(eq.left))
     e = eq.right;
 else
     throw Error('Le produit doit être égal à 0.'); const collect = (v: Expr): Expr[] => v.kind === 'product' ? v.factors.flatMap(collect) : v.kind === 'power' && v.exponent === 2 ? [v.base, v.base] : [v]; const factors = collect(e).filter(f => { const m = monomial(f); return !(m && m.degree === 0 && !zero(m.q)); }); if (factors.length < 2 || factors.some(f => zero(normalize(f)[1]) && zero(normalize(f)[2])))
-    throw Error('Sélectionne une équation produit nul avec des facteurs non constants.'); return factors.map(left => ({ left, right: c(0) })); }
+    throw Error('Sélectionne une équation produit nul avec des facteurs non constants.');
+    const branches = factors.map(left => ({ left, right: c(0) }));
+    if (!distinct) return branches; // Replay saves written before identical doors were merged.
+    const seen = new Set<string>();
+    return branches.filter(branch => { const key = solutionKey(solve(branch)); if (seen.has(key)) return false; seen.add(key); return true; });
+}
 export function quadraticInfo(eq: Equation) { if (!isZero(eq.right))
     throw Error('Ramène d’abord tous les termes à gauche, avec 0 à droite.'); const p = minus(normalize(eq.left), normalize(eq.right)); if (zero(p[2]) || expandable(eq.left))
     throw Error('Développe et réduis le trinôme avant de calculer Δ.'); return { p, delta: discriminant(p) }; }
