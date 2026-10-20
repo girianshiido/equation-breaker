@@ -22,7 +22,7 @@ const definitions: [string,SystemLevel['method'],number[][],number,string][] = [
  ['Le double équilibre','choice',[[3,2,1],[5,-1,4]],12,'Deux inconnues, deux fractions exactes, une méthode à choisir.'],
  ['Le troisième relais','substitution',[[1,0,0,2],[1,1,0,5],[0,1,1,7]],7,'La substitution remplace une inconnue dans toutes les autres équations où elle apparaît.'],
  ['Une expression, deux remplacements','substitution',[[1,-1,0,1],[1,1,1,6],[2,-1,1,5]],26,'Isole x : la même expression remplacera x dans les deux autres lignes.'],
- ['Trois lignes en mouvement','choice',[[1,1,1,6],[2,-1,1,3],[1,2,-1,2]],31,'Combine ou substitue. Chaque inconnue doit finir isolée.'],
+ ['Trois lignes en mouvement','combination',[[1,1,1,6],[2,-1,1,3],[1,2,-1,2]],31,'Combine ou substitue. Chaque inconnue doit finir isolée.'],
  ['Les signes se croisent','combination',[[1,1,0,2],[0,1,1,1],[1,0,1,-5]],38,'Prépare des opposés, puis combine les lignes deux à deux.'],
  ['Une inconnue s’annule','combination',[[1,1,1,1],[2,-1,1,-4],[1,2,-1,3]],40,'Une inconnue peut valoir zéro. Les trois valeurs doivent être isolées.'],
  ['Trois fractions exactes','choice',[[2,2,0,0],[0,2,3,2],[2,0,3,4]],40,'Les divisions gardent des fractions exactes. Choisis les lignes les plus simples.'],

@@ -173,3 +173,6 @@ button.sys-term { padding-inline:0; }
 .sys-world-heading .sys-progress { gap:18px; margin:0; }
 .sys-world-locked { padding:14px; border:1px solid #71889e44; border-radius:12px; color:var(--muted); font-size:13px; }
 @media(max-width:600px) { .sys-worlds { gap:8px; } .sys-world { padding:13px 10px; flex-wrap:wrap; gap:8px; } .sys-world-size { width:100%; font-size:25px; } .sys-world strong { font-size:15px; } .sys-world-arrow { display:none; } .sys-world span span { font-size:10px; } }
+
+.sys-handle.sys-line-label { cursor:default; color:#95adb8; border:0; background:none; }
+.sys-line-label small { font-size:11px; }

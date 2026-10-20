@@ -1,6 +1,6 @@
 {
   "name": "equation-breaker",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,7 +16,8 @@
     "qa:audio": "node scripts/audio-qa.mjs",
     "qa:mobile": "node scripts/mobile-qa.mjs",
     "qa:systems": "node scripts/systems-qa.mjs",
-    "qa:system-worlds": "node scripts/system-worlds-qa.mjs"
+    "qa:system-worlds": "node scripts/system-worlds-qa.mjs",
+    "qa:system-methods": "node scripts/system-methods-qa.mjs"
   },
   "devDependencies": {
     "typescript": "~5.9.3",

@@ -7,6 +7,17 @@ export type Side='left'|'right';
 export type FactorPart='coefficient'|'numerator'|'denominator';
 /** Missing written-move.merge keeps the replay semantics of pre-1.5.2 saves. */
 export type SystemAction = {kind:'numeric'} | {kind:'scale';row:number;factor:string;operation?:'multiply'|'divide';operand?:string} | {kind:'offset';row:number;operand:string} | {kind:'factor';row:number;side:Side;variable:number|null;part:FactorPart;value:string;term?:number} | {kind:'written-move';row:number;side:Side;term:number;merge?:true} | {kind:'expand';row:number;side:Side;term:number} | {kind:'merge';row:number;side:Side;terms:number[]} | {kind:'add';source:number;target:number} | {kind:'move';row:number;side:Side;variable:number|null} | {kind:'isolate';row:number;variable:number} | {kind:'substitute';row:number;variable:number;numeric?:true};
+export type SystemMethod='substitution'|'combination'|'choice';
+/** Old event journals replay through transformSystem; new player actions obey the lesson. */
+export function methodAllows(method:SystemMethod,action:SystemAction):boolean {
+ if(action.kind==='isolate')return false;
+ if(method==='substitution')return action.kind!=='add'&&(action.kind!=='scale'||action.factor==='-1'&&!action.operation&&!action.operand);
+ return method!=='combination'||action.kind!=='substitute';
+}
+export function transformForMethod(rows:Row[],action:SystemAction,method:SystemMethod):Row[]{
+ if(!methodAllows(method,action))throw Error(method==='substitution'?'Dans ce niveau, isole une inconnue puis utilise la substitution.':'Dans ce niveau, utilise les combinaisons de lignes.');
+ return transformSystem(rows,action);
+}
 export interface Reduction {rows:Row[];pivots:number[];kind:'unique'|'infinite'|'none';values:Rational[];free:number[]}
 export function makeRows(values:number[][]):Row[]{return values.map(values=>({coefficients:values.slice(0,-1).map(n=>rat(n)),right:rat(values.at(-1)!)}));}
 export const copyRows=(rows:Row[])=>rows.map(r=>({...r,coefficients:[...r.coefficients],...(r.layout?{layout:{rightVariables:[...r.layout.rightVariables],leftConstant:r.layout.leftConstant}}:{})}));
@@ -172,13 +183,19 @@ export function systemHint(rows:Row[],method:'substitution'|'combination'|'choic
    const i=candidates[0]?.i;if(i!==undefined){const step=manualStep(rows,i,j);if(step)action=step;}
   }
  }
- for(let j=0;j<rows[0].coefficients.length&&!action;j++){
+ for(let j=0;method!=='substitution'&&j<rows[0].coefficients.length&&!action;j++){
   const source=rows.findIndex(r=>!zero(r.coefficients[j])&&r.coefficients.slice(0,j).every(zero));if(source<0)continue;const target=rows.findIndex((r,i)=>i!==source&&!zero(r.coefficients[j]));if(target<0)continue;
   const q=neg(div(rows[target].coefficients[j],rows[source].coefficients[j]));action=one(q)?{kind:'add',source,target}:scaleToward(source,q);
  }
  if(!action)for(let i=0;i<rows.length;i++){const j=rows[i].coefficients.findIndex(q=>!zero(q));if(j>=0){const step=manualStep(rows,i,j);if(step){action=step;break;}}else{const p=displayParts(rows[i]);const k=p.leftVariables.findIndex(q=>!zero(q));if(k>=0){action={kind:'move',row:i,side:'left',variable:k};break;}}}
+ if(method==='substitution'&&action?.kind==='scale'){
+  const row=rows[action.row],p=displayParts(row),j=p.leftVariables.findIndex(q=>!zero(q));
+  if(j>=0){const term=row.written?expressionTerms(row.written.left).findIndex(t=>simpleTerm(t)?.variable===j):undefined;
+   action=factorAction(action.row,row,'left',j,'coefficient',term);
+  }
+ }
  if(!action)return{text:'Déplace les termes pour isoler une inconnue, puis substitue sa valeur.'};
- const text=action.kind==='move'?`${actionLabel(action)} : glisse ce terme de l’autre côté du signe égal.`:action.kind==='scale'?`Touche le point de L${action.row+1} et choisis ${actionLabel(action)} sur la molette.`:action.kind==='add'?`Glisse le point de L${action.source+1} sur L${action.target+1} pour additionner les deux membres correspondants.`:action.kind==='substitute'?`Sélectionne ${variables[action.variable]} isolé dans L${action.row+1}, puis « Substituer ».`:actionLabel(action);
+ const text=action.kind==='factor'?`Appuie longuement sur le coefficient dans L${action.row+1}, puis glisse-le dans l’autre membre pour isoler l’inconnue.`:action.kind==='move'?`${actionLabel(action)} : glisse ce terme de l’autre côté du signe égal.`:action.kind==='scale'?`Touche le point de L${action.row+1} et choisis ${actionLabel(action)} sur la molette.`:action.kind==='add'?`Glisse le point de L${action.source+1} sur L${action.target+1} pour additionner les deux membres correspondants.`:action.kind==='substitute'?`Sélectionne ${variables[action.variable]} isolé dans L${action.row+1}, puis « Substituer ».`:actionLabel(action);
  return{text,action};
 }
 export function satisfies(rows:Row[],values:Rational[]):boolean{return rows.every(r=>equal(r.coefficients.reduce((s,q,j)=>add(s,mul(q,values[j])),rat(0)),r.right));}

@@ -2,7 +2,7 @@ import { constant, variable, expressionSum, fromAffine, hasVariable } from '../s
 import { rowText } from '../src/systems/render';
 import { expect, it, vi } from 'vitest';
 import { rat, str, zero } from '../src/math/rational';
-import { makeRows, calculateSystemNumbers, manualSystemMoves, rowHasVariable, factorAction, displayParts, scaleByInteger, transformSystem, reduceSystem, systemReady, verifySystem, systemHint, systemKey, canSubstitute, satisfies } from '../src/systems/engine';
+import { makeRows, methodAllows, transformForMethod, calculateSystemNumbers, manualSystemMoves, rowHasVariable, factorAction, displayParts, scaleByInteger, transformSystem, reduceSystem, systemReady, verifySystem, systemHint, systemKey, canSubstitute, satisfies } from '../src/systems/engine';
 import { systemLevels, systemInitialRows } from '../src/systems/levels';
 import { decodeSystems, newSystemGame, readSystemSnapshot, systemSnapshot, systemUnlocked } from '../src/systems/save';
 import { decode, fresh, persist, load, KEY } from '../src/app/persistence';
@@ -45,7 +45,7 @@ it('distingue une solution unique, une contradiction et une infinité, sans vali
 it('résout les 30 niveaux par des opérations proposées et conserve toutes les solutions',()=>{
  const moves:Record<string,number>={};
  for(const level of systemLevels){let rows=level.rows,count=0,key=systemKey(rows);
-  for(;count<100&&!systemReady(rows);count++){const hint=systemHint(rows,level.method);expect(hint.action,`${level.id}: ${hint.text}`).toBeTruthy();rows=transformSystem(rows,hint.action!);expect(systemKey(rows),level.id).toBe(key);}
+  for(;count<100&&!systemReady(rows);count++){const hint=systemHint(rows,level.method);expect(hint.action,`${level.id}: ${hint.text}`).toBeTruthy();expect(methodAllows(level.method,hint.action!),level.id).toBe(true);rows=transformForMethod(rows,hint.action!,level.method);expect(systemKey(rows),level.id).toBe(key);}
   expect(systemReady(rows),level.id).toBe(true);const answer=verifySystem(rows,level.rows);if(answer.kind==='unique')expect(satisfies(level.rows,answer.values)).toBe(true);
   moves[level.id]=count;expect(count,`${level.id} budget ${level.budget}`).toBeLessThanOrEqual(level.budget);
  }
@@ -239,4 +239,16 @@ it('reprend une ancienne équation mise à jour sans changer ses solutions ni se
  expect(systemKey(systemInitialRows(systemLevels.find(l=>l.id==='s7')!,1))).toBe(systemKey(game.rows));
  const data=decodeSystems({results:{s7:{stars:3,moves:7,hints:0,errors:0}},active:old});expect(data.results.s7.stars).toBe(3);expect(readSystemSnapshot(data.active)?.revision).toBe(1);
  expect(readSystemSnapshot({...old,revision:99})).toBeNull();
+});
+
+
+it('réserve la substitution et les combinaisons à leurs chapitres sans interdire les gestes d’une ligne',()=>{
+ const rows=makeRows([[1,0,2],[1,1,5]]),add={kind:'add' as const,source:0,target:1},sub={kind:'substitute' as const,row:0,variable:0,numeric:true as const},wheel=scaleByInteger(0,'multiply','2');
+ for(const action of [add,wheel])expect(()=>transformForMethod(rows,action,'substitution')).toThrow(/substitution/);
+ expect(()=>transformForMethod(rows,sub,'combination')).toThrow(/combinaisons/);
+ expect(systemKey(transformForMethod(rows,sub,'substitution'))).toBe(systemKey(rows));
+ for(const action of [add,sub,wheel])expect(systemKey(transformForMethod(rows,action,'choice'))).toBe(systemKey(rows));
+ for(const method of ['substitution','combination','choice'] as const)for(const action of [factorAction(0,makeRows([[2,0,4],[1,1,5]])[0],'left',0,'coefficient'),{kind:'scale' as const,row:0,factor:'-1'},{kind:'offset' as const,row:0,operand:'-2'},{kind:'move' as const,row:1,side:'left' as const,variable:0}])expect(methodAllows(method,action)).toBe(true);
+ // Previously saved unrestricted journals remain replayable; only new actions use the lesson gate.
+ const old=readSystemSnapshot({level:'s1',events:[wheel,add],moves:2,errors:0,hints:0});expect(old).not.toBeNull();expect(systemKey(old!.rows)).toBe(systemKey(rows));
 });
