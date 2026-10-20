@@ -42,7 +42,7 @@ Le bouton haut-parleur, en haut, active ou coupe les sons ; ce choix est conserv
 - Pendant une transformation incomplète, **le signe égal est suspendu**. Ce dessin transitoire n’est pas enregistré comme une égalité : seul le dépôt valide produit une transformation mathématique et compte un coup.
 - Lâcher hors de la zone, Échap, changement d’orientation ou interruption du geste : retour intégral à l’état d’origine, sans coup ni erreur supplémentaires.
 
-Un toucher court sélectionne un terme ; deux touchers sélectionnent des termes d’une même somme. Les boutons permettent fusion, développement et opérations libres. **Saisir le coefficient / le dénominateur** et **÷ / × aux deux membres** offrent une alternative complète au glissement, utilisable au clavier avec Tab puis Entrée/Espace. Les diviseurs négatifs sont parenthésés, y compris dans les étapes intermédiaires.
+Un toucher court sélectionne un terme ; deux touchers sélectionnent des termes d’une même somme. Les boutons permettent fusion, développement et opérations libres. **Saisir le coefficient / le dénominateur** et **÷ / × aux deux membres** offrent une alternative complète au glissement, utilisable au clavier avec Tab puis Entrée/Espace. Les diviseurs négatifs sont parenthésés dans les écritures textuelles (`÷ (−3)`). Sous une barre de fraction, le dénominateur négatif est directement écrit `−3`.
 
 ### Choisir une méthode
 

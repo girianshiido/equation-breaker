@@ -2,11 +2,11 @@ import { type Expr, terms, c, product } from '../math/ast';
 import { monomial, mono } from '../math/normalize';
 import { groupedFactor } from '../math/gestures';
 import { neg, one, type Rational, str } from '../math/rational';
-import { escape, format, operandText } from '../math/format';
+import { escape, format } from '../math/format';
 const fraction = (q: Rational) => q.d === 1n ? escape(String(q.n)) : `<span class="fraction"><span>${escape(String(q.n))}</span><span>${escape(String(q.d))}</span></span>`;
 export function math(e: Expr, raw = false): string {
     const m = monomial(e);
-    if (raw && e.kind === 'fraction') return `<span class="fraction"><span>${math(e.numerator)}</span><span>${escape(operandText(e.denominator))}</span></span>`;
+    if (raw && e.kind === 'fraction') return `<span class="fraction"><span>${math(e.numerator)}</span><span>${math(c(e.denominator))}</span></span>`;
     if (raw && e.kind === 'product' && !m?.degree) return e.factors.map((f, i) => {
         const text = math(f);
         return f.kind === 'sum' || (i > 0 && text.startsWith('−')) ? `(${text})` : text;

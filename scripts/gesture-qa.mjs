@@ -54,10 +54,10 @@ try {
     await open('w1-8'); await begin('[data-node="l.0"] [data-grip="denominator"]', true); assert.match(await text('.left-plate .blocks'), /x.*8/); assert.equal(await text('.right-plate .blocks'), '5');
     await cross(); await page.mouse.up(); assert.equal(await text('.right-plate .blocks'), '4 × 5'); await done(); assert.equal(await text('.right-plate .blocks'), '20');
     check('Denominator drag multiplies every term and exposes the intermediate product');
-    await open('w1-4'); await begin('[data-node="l"]', true); await cross(); await page.mouse.up(); assert.equal(await text('.right-plate .fraction'), '10 (−2)'); await done(); assert.equal(await text('.right-plate .blocks'), '−5');
-    check('Negative divisor remains parenthesized in the intermediate fraction');
+    await open('w1-4'); await begin('[data-node="l"]', true); await cross(); await page.mouse.up(); assert.equal(await text('.right-plate .fraction'), '10 −2'); await done(); assert.equal(await text('.right-plate .blocks'), '−5');
+    check('Negative divisor stays bare under the fraction bar, with parenthesized textual division');
     await open('w1-11'); await page.locator('[data-node="l.0"]').click(); assert.equal(await text('.revealed-grip'), '(−1)');
-    await begin('.revealed-grip'); assert.match(await text('.left-plate .blocks'), /x.*−\s*9/); await cross(); await page.mouse.up(); assert.equal(await text('.right-plate .fraction'), '3 (−1)'); await done(); assert.equal(await text('.right-plate .blocks'), '−3');
+    await begin('.revealed-grip'); assert.match(await text('.left-plate .blocks'), /x.*−\s*9/); await cross(); await page.mouse.up(); assert.equal(await text('.right-plate .fraction'), '3 −1'); await done(); assert.equal(await text('.right-plate .blocks'), '−3');
     check('Selecting −x reveals −1, which can be detached directly');
     await open('w1-11'); await page.locator('#negate').focus(); await page.keyboard.press('Enter'); await done(); assert.equal(await text('.right-plate .blocks'), '−3'); assert.match(await text('.left-plate .blocks'), /x.*−\s*9/); assert.equal(await text('#moves'), '1');
     check('Keyboard × (−1) applies to both full members in one move');

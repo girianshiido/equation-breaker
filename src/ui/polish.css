@@ -22,7 +22,7 @@ button.primary:hover { background: #b0ffe4; }
 .world-card, .training-card, .compact-card { border-radius: 16px; background: linear-gradient(140deg, #17273b, #101d30); border-color: #6381a62b; box-shadow: inset 0 1px #c8e6f208; }
 .world-symbol { font-family: var(--math-font); border-radius: 13px; }
 .rule-example, .level-formula, .result-solution, .solution-reveal, .root-relations, .mirror-preview, .history-list strong, .branches button span { font-family: var(--math-font); font-style: normal; font-weight: 450; }
-.game { max-width: 1040px; margin-top: 30px; }
+.game { --equation-size: 43px; max-width: 1040px; margin-top: 30px; }
 .game-heading { gap: 15px; }
 .game-heading h1 { font-size: 29px; letter-spacing: -.025em; }
 .mission { margin-top: 20px; border-bottom: none; border-top-color: #58769732; padding: 14px 0 4px; }
@@ -36,7 +36,7 @@ button.primary:hover { background: #b0ffe4; }
 .game .plate-label span { display: none; }
 .game .right-plate .plate-label { color: #a1aacb; }
 .game .blocks { display: flex; align-items: center; justify-content: center; align-content: center; flex: 0 1 auto; gap: 3px; padding: 0; min-height: 94px; flex-wrap: wrap; }
-.game .block { display: inline-flex; align-items: center; justify-content: center; font: 450 43px/1.15 var(--math-font); font-variant-numeric: lining-nums tabular-nums; letter-spacing: -.025em; color: #c1f9e6; background: transparent; border: 1px solid transparent; border-bottom: 2px solid transparent; border-radius: 8px; box-shadow: none; min-width: 44px; min-height: 65px; max-width: 100%; padding: 5px 8px; gap: 1px; }
+.game .block { display: inline-flex; align-items: center; justify-content: center; font: 450 var(--equation-size)/1.15 var(--math-font); font-variant-numeric: lining-nums tabular-nums; letter-spacing: -.025em; color: #c1f9e6; background: transparent; border: 1px solid transparent; border-bottom: 2px solid transparent; border-radius: 8px; box-shadow: none; min-width: 44px; min-height: 65px; max-width: 100%; padding: 5px 8px; gap: 1px; }
 .game .block.constant { color: #f6dfb2; }
 .game .block.group { color: #d5c7ff; font-size: 37px; }
 .game .block.rational { color: #c6ddff; }
@@ -74,24 +74,24 @@ button.primary:hover { background: #b0ffe4; }
 .result-screen h1 { font-size: 41px; }
 .result-continue { margin: 18px 0; }
 .result-seal { border-radius: 25px; background: radial-gradient(circle at 35% 25%, #3c80654a, #172f34); border-color: #91d8b84a; }
-@media(max-width: 1000px) { .game .block { font-size: 38px; } .game .block.group { font-size: 29px; } }
+@media(max-width: 1000px) { .game { --equation-size: 38px; } .game .block.group { font-size: 29px; } }
 @media(max-width: 700px) {
   .app-shell { padding: 0 20px; } .topbar { height: 82px; } .top-tools { gap: 8px; }
   .star-total { font-size: 13px; } .game { margin-top: 23px; }
   .game-heading h1 { font-size: 24px; } .game .arena { min-height: 215px; padding: 31px 10px 20px; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr); border-radius: 21px; }
   .game .plate { padding: 10px 5px; } .game .plate-label { left: 5px; right: 5px; font-size: 8px; top: -16px; letter-spacing: .09em; }
-  .game .equal-sign { width: 40px; font-size: 37px; } .game .block { font-size: 32px; min-height: 57px; padding: 4px 5px; }
+  .game .equal-sign { width: 40px; font-size: 37px; } .game { --equation-size: 32px; } .game .block { min-height: 57px; padding: 4px 5px; }
   .game .block.group { font-size: 25px; } .game .arena-dense .block.group { font-size: 21px; }
   .selection-help { font-size: 12px; } .context-actions { min-height: 59px; } .game .validate { min-width: 126px; }
 }
 @media(max-width: 480px) {
   .app-shell { padding: 0 16px; } .topbar { height: 75px; } .brand-mark { width: 38px; height: 38px; } .brand { gap: 8px; }
   .top-tools { gap: 6px; } .top-tools .icon-button { width: 35px; height: 35px; min-height: 35px; border-radius: 11px; } .star-total { font-size: 12px; }
-  .game { margin-top: 18px; } .game-heading h1 { font-size: 21px; } .game-heading .eyebrow { font-size: 8px; } .game-heading .world-symbol { width: 33px; height: 33px; }
+  .game { --equation-size: 30px; margin-top: 18px; } .game-heading h1 { font-size: 21px; } .game-heading .eyebrow { font-size: 8px; } .game-heading .world-symbol { width: 33px; height: 33px; }
   .mission { margin-top: 15px; padding: 10px 0 1px; font-size: 10px; } .game-meter { padding: 10px 0 12px; font-size: 8px; } .game-meter > span:nth-child(2) { max-width: 151px; }
   .game .arena { min-height: 185px; padding: 29px 5px 18px; grid-template-columns: minmax(0, 1fr) 31px minmax(0, 1fr); border-radius: 20px; }
   .game .plate { padding: 6px 3px; } .game .plate-label { top: -17px; left: 2px; right: 2px; font-size: 7px; line-height: 1.3; min-height: 22px; height: 22px; letter-spacing: .07em; }
-  .game .blocks { gap: 0; min-height: 88px; } .game .block { font-size: 30px; min-width: 35px; min-height: 50px; padding: 4px 4px; letter-spacing: -.035em; }
+  .game .blocks { gap: 0; min-height: 88px; } .game .block { min-width: 35px; min-height: 50px; padding: 4px 4px; letter-spacing: -.035em; }
   .game .block.group { font-size: 21px; } .game .arena-dense .block.group { font-size: 18px; }
   .game .equal-sign { width: 31px; height: 88px; font-size: 31px; }
   .game .block .term-plus { margin-right: 2px; font-size: .8em; }
@@ -106,7 +106,7 @@ button.primary:hover { background: #b0ffe4; }
 @media(max-width: 350px) {
   .app-shell { padding: 0 12px; } .brand-break { font-size: 11px; } .brand { font-size: 8px; gap: 7px; } .brand-mark { width: 32px; height: 35px; font-size: 14px; }
   .top-tools { gap: 4px; } .top-tools .icon-button { width: 32px; min-height: 34px; height: 34px; } .top-tools .icon-button svg { width: 17px; height: 17px; }
-  .game .block { font-size: 27px; min-width: 31px; padding: 4px 3px; } .game .block.group { font-size: 19px; } .game .arena-dense .block.group { font-size: 17px; }
+  .game { --equation-size: 27px; } .game .block { min-width: 31px; padding: 4px 3px; } .game .block.group { font-size: 19px; } .game .arena-dense .block.group { font-size: 17px; }
   .game .arena { grid-template-columns: minmax(0,1fr) 29px minmax(0,1fr); } .game .equal-sign { width: 29px; font-size: 29px; }
   .game .validate { min-width: 116px; } .game-controls { gap: 7px; }
 }
@@ -118,8 +118,8 @@ button.primary:hover { background: #b0ffe4; }
   .context-panel { margin-top: 11px; } .selection-caption { padding: 5px 9px; min-height: 29px; } .context-actions { min-height: 46px; padding: 7px 9px; }
   .operation-bar { padding-top: 9px; } .feedback { min-height: 36px; padding: 7px 1px 5px; font-size: 10px; } .game-controls { padding-top: 9px; }
 }
-[data-large=true] .game .block { font-size: 46px; }
-@media(max-width:480px) { [data-large=true] .game .block { font-size: 32px; } [data-large=true] .game .block.group { font-size: 22px; } }
+[data-large=true] .game { --equation-size: 46px; }
+@media(max-width:480px) { [data-large=true] .game { --equation-size: 32px; } [data-large=true] .game .block.group { font-size: 22px; } }
 
 /* Keep the earned themes and reading preferences visible in the new palette. */
 :root[data-theme=blue] { --accent: #85c5ff; --accent-rgb: 133,197,255; }
@@ -131,8 +131,8 @@ button.primary:hover { background: #b0ffe4; }
 .game .arena { border-color: rgba(var(--accent-rgb), .33); }
 .term-unit { --operator-width: 22px; display: inline-flex; align-items: center; min-width: 0; max-width: 100%; }
 .term-unit.has-sign .block { max-width: calc(100% - var(--operator-width)); }
-.term-operator { flex: 0 0 var(--operator-width); width: var(--operator-width); display: inline-flex; align-items: center; justify-content: center; font: 450 clamp(20px, 2.5vw, 30px)/1 var(--math-font); color: #a1b9be; pointer-events: none; user-select: none; }
-@media (max-width: 700px) { .term-unit { --operator-width: 15px; } }
+.term-operator { flex: 0 0 var(--operator-width); width: var(--operator-width); display: inline-flex; align-items: center; justify-content: center; font: 450 var(--equation-size)/1.15 var(--math-font); color: #a1b9be; pointer-events: none; user-select: none; }
+@media (max-width: 700px) { .term-unit { --operator-width: 20px; } }
 
 /* Native selection and zoom are separate from algebraic selection. */
 [data-touch-ui=true], [data-touch-ui=true] body, [data-touch-ui=true] dialog {
@@ -198,7 +198,7 @@ button.primary:hover { background: #b0ffe4; }
   .app-shell:has(.game) .brand { font-size: 8px; }
   .app-shell:has(.game) .desktop-nav button { font-size: 10px; }
   .app-shell:has(.game) .top-tools .icon-button { width: 33px; min-height: 33px; height: 33px; }
-  .game { margin-top: 8px; }
+  .game { --equation-size: 30px; margin-top: 8px; }
   .game .game-heading { min-height: 30px; gap: 10px; }
   .game .game-heading h1 { font-size: 18px; }
   .game .game-heading .eyebrow { font-size: 7px; }
@@ -208,7 +208,7 @@ button.primary:hover { background: #b0ffe4; }
   .game .arena { min-height: 105px; padding: 23px 8px 9px; }
   .game .blocks { min-height: 60px; }
   .game .equal-sign { height: 60px; min-height: 60px; }
-  .game .block { min-height: 48px; font-size: 30px; padding: 3px 5px; }
+  .game .block { min-height: 48px; padding: 3px 5px; }
   .game .block.group { font-size: 24px; }
   .game .plate { padding-top: 3px; padding-bottom: 3px; }
   .game .plate-label { top: -18px; height: 22px; min-height: 22px; font-size: 8px; }
@@ -222,3 +222,9 @@ button.primary:hover { background: #b0ffe4; }
   .game .operation-bar { padding-top: 7px; }
   .game .game-controls .validate { min-height: 44px; }
 }
+
+/* Equal side bearings keep a binary sign centered between the visible operands.
+   The invisible hit area remains wide without changing mathematical spacing. */
+.game .blocks { column-gap: 0; }
+.game .term-unit .block { min-width: 0; isolation: isolate; }
+.game .term-unit .block::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 100%; min-width: 44px; transform: translateX(-50%); z-index: -1; }

@@ -12,6 +12,12 @@ import { restore, snapshot } from '../src/app/persistence';
 import { blocks, math } from '../src/ui/math';
 
 describe('Manipulations progressives', () => {
+    it('écrit le dénominateur négatif sans parenthèses sous une barre de fraction', () => {
+        const p = gesturePlan(equation('-3x=4'), 'l', 'coefficient');
+        expect(math(p.carried)).toBe('−3');
+        expect(math(p.landing.right, true)).toBe('<span class="fraction"><span>4</span><span>−3</span></span>');
+        expect(p.label).toContain('par (−3)');
+    });
     it('réserve les parenthèses des produits numériques aux facteurs négatifs après le premier', () => {
         for (const [a, b, expected] of [[4, 3, '4 × 3'], [4, -3, '4 × (−3)'], [-3, 4, '−3 × 4'], [-3, -4, '−3 × (−4)']] as const)
             expect(math({ kind: 'product', factors: [c(a), c(b)] }, true)).toBe(expected);

@@ -105,3 +105,13 @@ Les gestes tactiles et mesures sont exécutés dans Chrome/macOS avec émulation
 Le bouton de continuation est placé après la solution, avant les statistiques et les succès. Sur les petits écrans, il reste fixé en bas avec les marges de sécurité ; la navigation de bas de page est masquée pendant la réussite. Le résultat s’ouvre en haut de page. Les commandes Rejouer, Voir mes étapes et Retour aux mondes restent disponibles.
 
 Contrôle par résolution réelle du premier niveau avec une progression neuve (et ses succès débloqués) : 320×480, 320×568, 390×844, 568×320, 844×390 et 1440×768. Visibilité et cible tactile de Continuer contrôlées avant et après défilement sur mobile, puis clic et ouverture du niveau suivant. Rapport intégré à `test-results/mobile-report.json`. Essais Chromium sur macOS avec émulation mobile.
+
+
+## Signe de soustraction — 20 octobre 2026
+
+Le signe binaire et le moins unaire utilisent désormais la même police, la même graisse et la même taille responsive, y compris en texte agrandi. Les marges des termes sont symétriques sans largeur minimale artificielle ; leurs zones tactiles invisibles conservent au moins 44 px de largeur. Contrôle de `5x − 7` en 320×480, 390×844 et 1440×900 : tailles calculées identiques et décalage du signe par rapport au milieu des deux termes inférieur à un pixel. Contrôle intégré à la QA mobile.
+
+
+Le jeton `−3` et le dénominateur d’une fraction verticale provisoire sont écrits sans parenthèses. La barre de fraction sépare déjà les opérandes ; les parenthèses sont conservées dans les libellés textuels de division `÷ (−3)`. Cas de référence : `−3x=4`, dépôt affichant 4 sur −3.
+
+Vérification finale de ces ajustements : 125 tests automatiques, 34 contrôles mobiles, 23 scénarios de gestes et 43 contrôles de régression navigateur réussis.

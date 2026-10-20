@@ -13,9 +13,9 @@ const context = await chromium.launchPersistentContext(profile, { headless: true
 const page = await context.newPage(), errors = [], report = [];
 page.on('pageerror', e => errors.push(e.message));
 await mkdir('test-results', { recursive: true });
-async function geometry(label) { const rr = await page.evaluate(() => { const w = innerWidth; const nodes = [...document.querySelectorAll('.block,.primary,.world-card,.level-card')].map(n => { const r = n.getBoundingClientRect(); return { tag: n.className, x: r.x, right: r.right, w: r.width, sw: n.scrollWidth, cw: n.clientWidth, text: n.textContent }; }); return { w, sw: document.documentElement.scrollWidth, nodes }; }); assert.ok(rr.sw <= rr.w + 1, `${label}: page overflow ${rr.sw}/${rr.w}`); for (const r of rr.nodes) {
+async function geometry(label) { const rr = await page.evaluate(() => { const w = innerWidth; const nodes = [...document.querySelectorAll('.block,.primary,.world-card,.level-card')].map(n => { const r = n.getBoundingClientRect(), range = document.createRange(); range.selectNodeContents(n); const content = range.getBoundingClientRect(); return { tag: n.className, x: r.x, right: r.right, w: r.width, sw: n.scrollWidth, cw: n.clientWidth, contentX: content.x, contentRight: content.right, text: n.textContent }; }); return { w, sw: document.documentElement.scrollWidth, nodes }; }); assert.ok(rr.sw <= rr.w + 1, `${label}: page overflow ${rr.sw}/${rr.w}`); for (const r of rr.nodes) {
     assert.ok(r.x >= -.5 && r.right <= rr.w + .5, `${label}: outside ${JSON.stringify(r)}`);
-    assert.ok(r.sw <= r.cw + 2, `${label}: clipped term ${JSON.stringify(r)}`);
+    assert.ok(r.tag.startsWith('block') ? r.contentX >= r.x - 2 && r.contentRight <= r.right + 2 : r.sw <= r.cw + 2, `${label}: clipped content ${JSON.stringify(r)}`);
 } report.push({ label, width: rr.w, fits: true }); }
 async function nav(screen) { const button = page.locator(`[data-screen="${screen}"]:visible`).first(); if (await button.count()) {
     await button.click();
