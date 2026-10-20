@@ -95,7 +95,7 @@ try {
     await page.locator('#undo').click(); await page.locator('[data-node="l"]').click(); await page.locator('#expand').click(); await done(); assert.ok(await page.locator('.left-plate .blocks .block').count()>1);
     check('Grouped fractions retain keyboard denominator and expansion alternatives');
     await open('w3-5');await page.locator('#negate').click();await done();assert.equal((await text('.left-plate .blocks')).replaceAll(' ',''),'x+2');assert.equal(await text('.right-plate .blocks'),'−4');assert.equal(await text('#moves'),'1');
-    await page.reload();await page.locator('#resume').click();assert.equal((await text('.left-plate .blocks')).replaceAll(' ',''),'x+2');await begin('[data-node="l.1"]');await cross();await page.mouse.up();await done();await page.locator('#validate').click();assert.equal(await text('.result-solution'),'S = { −6 }');
+    await page.reload();await page.locator('#resume').click();assert.equal((await text('.left-plate .blocks')).replaceAll(' ',''),'x+2');await begin('[data-node="l.1"]');await cross();await page.mouse.up();await done();await page.locator('#validate').click();assert.equal(await page.locator('.result-solution').getAttribute('aria-label'),'S = { −6 }');
     check('Multiplying a negative group by −1 cancels signs, persists and permits full resolution');
     await page.setViewportSize({width:320,height:568});await open('w3-2');
     const fontSize=()=>page.locator('.left-plate .block').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize));const beforeFit=await fontSize();assert.ok(beforeFit>=16&&beforeFit<27);
@@ -117,7 +117,7 @@ try {
         assert.ok(await page.locator(`[data-branch="${index}"].active`).count());
         await begin('[data-node="l.1"]'); await cross(); await page.mouse.up(); await done(); await page.locator('#validate').click();
     }
-    assert.equal(await text('.result-solution'), 'S = { 2 ; 3 }');
+    assert.equal(await page.locator('.result-solution').getAttribute('aria-label'), 'S = { 2 ; 3 }');
     await page.screenshot({ path: 'test-results/completed-square-branches.png', fullPage: true });
     check('Hold-and-sweep selection, exact 25/4 completion and two solved square-root branches');
     await open('w5-1'); await page.locator('#split').click(); await done();
@@ -126,7 +126,7 @@ try {
     await page.reload(); await page.locator('#resume').click(); assert.ok(await page.locator('[data-branch="1"].active').count());
     await page.screenshot({path:'test-results/product-auto-second-door.png'});
     await begin('[data-node="l.1"]'); await cross(); await page.mouse.up(); await done(); await page.locator('#validate').click();
-    assert.equal(await text('.result-solution'), 'S = { −3 ; 2 }');
+    assert.equal(await page.locator('.result-solution').getAttribute('aria-label'), 'S = { −3 ; 2 }');
     check('Zero product validates door one, automatically opens door two, persists and reunites solutions on final validation');
     // Actual touch events in Chrome, in both portrait and landscape arenas.
     const cdp = await context.newCDPSession(page);

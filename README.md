@@ -28,7 +28,7 @@ Sur téléphone, le surlignage natif du navigateur et les gestes de zoom sont d�
 
 Les signes binaires sont centrés entre les termes, y compris pendant le dépôt (`2 + 4`). Un terme négatif conserve son signe dans le jeton transporté (`−7`, puis `7` après franchissement). Les produits numériques évitent les parenthèses superflues : `4 × 3`, `4 × (−3)`, `−3 × 4`.
 
-Les fractions conservent la taille de caractères des termes voisins : numérateurs, dénominateurs et nombres entiers utilisent la même taille. Leurs barres et les opérateurs partagent le même axe ; les racines suivent la ligne du texte et les parenthèses s’étirent à la hauteur de leur contenu.
+Les fractions conservent la taille de caractères des termes voisins : numérateurs, dénominateurs et nombres entiers utilisent la même taille. Leurs barres et les opérateurs partagent le même axe ; les racines suivent la ligne du texte et les parenthèses s’étirent à la hauteur de leur contenu. Les accolades de l’ensemble des solutions s’adaptent également aux fractions et aux racines, dans le jeu et sur l’écran de réussite.
 
 Les termes apparaissent sans cadres permanents. Leurs zones tactiles restent généreuses ; une sélection se souligne, et la zone de dépôt apparaît pendant le geste.
 

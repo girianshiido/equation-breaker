@@ -194,3 +194,9 @@ Contrôle visuel de cette présentation dans le navigateur intégré à une larg
 - Déplacement du bouton Valider vers une coche dans le coin inférieur droit du cadre, avec nom accessible et infobulle « Valider l’équation ». Zone tactile de 44 × 44 px ; espace réservé sous les termes pour éviter les chevauchements.
 - Retrait de la validation de la barre inférieure. Les commandes Annuler, Indice et Étapes reviennent dans le flux de la page ; aucune barre fixe ne recouvre la coche. La coche est rendue inerte pendant une manipulation, comme les autres commandes.
 - TypeScript strict et compilation réussis. 35 contrôles navigateur mobile réussis, aucune erreur JavaScript : visibilité de la coche avec l’équation à l’écran, appartenance au cadre, absence de recouvrement par les termes, cible tactile et hit-test sur six formats portrait/paysage, gestes conservés et verrouillage pendant le glissement, validation du niveau et bouton Continuer. Rendu inspecté dans le navigateur intégré. Ces essais restent réalisés sur ordinateur avec émulation mobile.
+
+
+## Accolades extensibles des ensembles de solutions — 20 octobre 2026
+
+- Accolades vectorielles adaptées à la hauteur de la solution la plus haute, avec une épaisseur constante. Même rendu pour l’ensemble affiché en cours de jeu et sur l’écran de résultat ; S = ∅ et S = ℝ conservent leur notation usuelle.
+- TypeScript, compilation et 150 tests réussis. Inspection visuelle dans le navigateur intégré : résultat réel à 360 px pour {−1/2 ; 2}, puis exemples {−√6/3 ; √6/3} et {−1−√3 ; −1+√3}. Les noms accessibles conservent les accolades et la lecture textuelle exacte de l’ensemble.
