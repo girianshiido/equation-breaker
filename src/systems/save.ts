@@ -1,17 +1,17 @@
-import { systemLevels } from './levels';
+import { systemLevels, systemInitialRows } from './levels';
 import { copyRows, manualSystemMoves, transformSystem, type Row, type SystemAction } from './engine';
 export interface SystemResult { stars:number; moves:number; hints:number; errors:number }
-export interface SystemSnapshot { level:string; events:SystemAction[]; moves:number; hints:number; errors:number }
+export interface SystemSnapshot { level:string; revision?:number; events:SystemAction[]; moves:number; hints:number; errors:number }
 export interface SystemsData { results:Record<string,SystemResult>; active:SystemSnapshot|null; wheelMode:'multiply'|'divide' }
 export interface SystemGame extends SystemSnapshot { rows:Row[] }
 export const freshSystems=():SystemsData=>({results:{},active:null,wheelMode:'multiply'});
 const object=(v:unknown):v is Record<string,unknown>=>typeof v==='object'&&v!==null&&!Array.isArray(v);
 const count=(v:unknown)=>typeof v==='number'&&Number.isFinite(v)&&v>=0?Math.min(100000,Math.floor(v)):0;
-export function newSystemGame(level:string):SystemGame { const l=systemLevels.find(l=>l.id===level);if(!l)throw Error('Niveau inconnu.');return {level,events:[],moves:0,hints:0,errors:0,rows:copyRows(l.rows)}; }
+export function newSystemGame(level:string,revision?:number):SystemGame { const l=systemLevels.find(l=>l.id===level);if(!l)throw Error('Niveau inconnu.');if(revision!==undefined&&revision!==1&&revision!==l.revision)throw Error('Version de niveau inconnue.');return {level,revision:revision??l.revision,events:[],moves:0,hints:0,errors:0,rows:copyRows(systemInitialRows(l,revision))}; }
 export function readSystemSnapshot(value:unknown):SystemGame|null {
     try {
         if(!object(value)||typeof value.level!=='string'||!Array.isArray(value.events)||value.events.length>401)return null;
-        const game=newSystemGame(value.level);
+        const game=newSystemGame(value.level,typeof value.revision==='number'?value.revision:1);
         for(const v of value.events){
             if(!object(v))return null;let action:SystemAction;
             if(v.kind==='numeric')action={kind:'numeric'};
@@ -30,11 +30,11 @@ export function readSystemSnapshot(value:unknown):SystemGame|null {
         return {...game,moves:Math.max(manualSystemMoves(game.events),count(value.moves)),hints:count(value.hints),errors:count(value.errors)};
     }catch{return null;}
 }
-export const systemSnapshot=(g:SystemGame):SystemSnapshot=>({level:g.level,events:[...g.events],moves:g.moves,hints:g.hints,errors:g.errors});
+export const systemSnapshot=(g:SystemGame):SystemSnapshot=>({level:g.level,revision:g.revision??1,events:[...g.events],moves:g.moves,hints:g.hints,errors:g.errors});
 export function decodeSystems(value:unknown):SystemsData {
     const data=freshSystems();if(!object(value))return data;
     if(object(value.results))for(const level of systemLevels){const r=value.results[level.id];if(object(r)&&count(r.stars)>0)data.results[level.id]={stars:Math.min(3,count(r.stars)),moves:count(r.moves),errors:count(r.errors),hints:count(r.hints)};}
     if(value.wheelMode==='divide')data.wheelMode='divide';
     const game=readSystemSnapshot(value.active);if(game)data.active=systemSnapshot(game);return data;
 }
-export function systemUnlocked(data:SystemsData,index:number):boolean { return index===0||!!data.results[systemLevels[index-1]?.id]; }
+export function systemUnlocked(data:SystemsData,index:number):boolean { const level=systemLevels[index];if(!level)return false;return index===0||!!data.results[level.id]||!!data.results[systemLevels[index-1]?.id]||index===systemLevels.findIndex(l=>l.world===level.world)&&systemLevels.some(l=>l.world===level.world&&!!data.results[l.id]); }

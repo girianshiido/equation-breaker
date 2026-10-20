@@ -3,7 +3,7 @@ import { rowText } from '../src/systems/render';
 import { expect, it, vi } from 'vitest';
 import { rat, str, zero } from '../src/math/rational';
 import { makeRows, calculateSystemNumbers, manualSystemMoves, rowHasVariable, factorAction, displayParts, scaleByInteger, transformSystem, reduceSystem, systemReady, verifySystem, systemHint, systemKey, canSubstitute, satisfies } from '../src/systems/engine';
-import { systemLevels } from '../src/systems/levels';
+import { systemLevels, systemInitialRows } from '../src/systems/levels';
 import { decodeSystems, newSystemGame, readSystemSnapshot, systemSnapshot, systemUnlocked } from '../src/systems/save';
 import { decode, fresh, persist, load, KEY } from '../src/app/persistence';
 it('refuse 0 et 1, accepte −1, les autres négatifs et les fractions',()=>{
@@ -42,7 +42,7 @@ it('distingue une solution unique, une contradiction et une infinité, sans vali
  const r2=makeRows([[0,0,0],[0,0,0]]);expect(verifySystem(r2,r2).free).toHaveLength(2);
  expect(()=>verifySystem(makeRows([[1,0,99],[0,1,3]]),unique)).toThrow(/mêmes solutions/);
 });
-it('résout les 21 niveaux par des opérations proposées et conserve toutes les solutions',()=>{
+it('résout les 30 niveaux par des opérations proposées et conserve toutes les solutions',()=>{
  const moves:Record<string,number>={};
  for(const level of systemLevels){let rows=level.rows,count=0,key=systemKey(rows);
   for(;count<100&&!systemReady(rows);count++){const hint=systemHint(rows,level.method);expect(hint.action,`${level.id}: ${hint.text}`).toBeTruthy();rows=transformSystem(rows,hint.action!);expect(systemKey(rows),level.id).toBe(key);}
@@ -215,4 +215,28 @@ it('enregistre un calcul automatique sans gonfler le nombre de transformations e
  const game=newSystemGame('s3');for(const action of [{kind:'move' as const,row:0,side:'left' as const,variable:1},{kind:'substitute' as const,row:0,variable:0},{kind:'numeric' as const}]){game.rows=transformSystem(game.rows,action);game.events.push(action);}
  game.moves=manualSystemMoves(game.events);expect(game.moves).toBe(2);const replay=readSystemSnapshot(systemSnapshot(game))!;expect(replay.moves).toBe(2);expect(replay.rows).toEqual(game.rows);
  const current=newSystemGame('s2');for(const action of [{kind:'substitute' as const,row:0,variable:1,numeric:true as const}]){current.rows=transformSystem(current.rows,action);current.events.push(action);current.moves++;}expect(readSystemSnapshot(systemSnapshot(current))!.events[0]).toMatchObject({numeric:true});
+});
+
+
+it('sépare les deux mondes, varie les couples et conserve les fractions sur les deux membres',()=>{
+ expect(systemLevels.filter(l=>l.world===2)).toHaveLength(21);expect(systemLevels.filter(l=>l.world===3)).toHaveLength(9);
+ expect(systemLevels.map(l=>l.world)).toEqual([...Array(21).fill(2),...Array(9).fill(3)]);
+ const pairs=systemLevels.filter(l=>l.world===2).map(l=>reduceSystem(l.rows)).filter(r=>r.kind==='unique').map(r=>r.values.map(str).join(';'));
+ expect(pairs.filter(p=>p==='2;3')).toHaveLength(1);expect(new Set(pairs).size).toBeGreaterThanOrEqual(17);
+ expect(pairs.some(p=>p.startsWith('0;'))).toBe(true);expect(pairs.some(p=>p.includes('/'))).toBe(true);expect(pairs.some(p=>p.split(';').every(x=>x.startsWith('-')))).toBe(true);
+ const level=systemLevels.find(l=>l.id==='s28')!;expect(rowText(level.rows[0])).toBe('1/3x + 2 = 1/4y − 1/3');expect(reduceSystem(level.rows).values.map(str)).toEqual(['-4','4']);
+});
+it('ouvre le monde suivant après le dernier 2×2 et garde les anciens niveaux acquis accessibles',()=>{
+ const data=decodeSystems({});const index=systemLevels.findIndex(l=>l.world===3);
+ expect(systemUnlocked(data,index)).toBe(false);data.results.s30={stars:1,moves:20,errors:0,hints:0};expect(systemUnlocked(data,index)).toBe(true);
+ delete data.results.s30;data.results.s20={stars:3,moves:18,errors:0,hints:0};expect(systemUnlocked(data,index)).toBe(true);expect(systemUnlocked(data,index+1)).toBe(true);
+});
+it('reprend une ancienne équation mise à jour sans changer ses solutions ni ses étoiles',()=>{
+ const old={level:'s7',events:[{kind:'add',source:0,target:1}],moves:1,hints:0,errors:0};
+ const game=readSystemSnapshot(old)!;expect(game.revision).toBe(1);expect(reduceSystem(game.rows).values.map(str)).toEqual(['2','3']);
+ expect(readSystemSnapshot(systemSnapshot(game))?.rows).toEqual(game.rows);
+ const current=newSystemGame('s7');expect(current.revision).toBe(2);expect(reduceSystem(current.rows).values.map(str)).toEqual(['-2','5']);
+ expect(systemKey(systemInitialRows(systemLevels.find(l=>l.id==='s7')!,1))).toBe(systemKey(game.rows));
+ const data=decodeSystems({results:{s7:{stars:3,moves:7,hints:0,errors:0}},active:old});expect(data.results.s7.stars).toBe(3);expect(readSystemSnapshot(data.active)?.revision).toBe(1);
+ expect(readSystemSnapshot({...old,revision:99})).toBeNull();
 });
