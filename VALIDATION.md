@@ -187,3 +187,10 @@ Contrôle visuel de cette présentation dans le navigateur intégré à une larg
 - Rétablissement des entrées publiées lors des douze dernières révisions. La compilation conserve désormais les anciennes entrées nommées par empreinte. Leur contenu reste inchangé ; seul le JS/CSS référencé par l’HTML courant est précaché (27 ressources, sans augmentation du cache hors ligne).
 - Navigation du nouveau service worker : page en ligne prioritaire, repli sur l’index précaché hors connexion. Aucun rechargement automatique d’une partie en cours. Écran initial lisible et bouton Recharger si le code principal ne peut pas être chargé ; aucune suppression de progression ou de paramètres.
 - TypeScript et deux compilations successives réussis, manifestes de cache identiques. Test navigateur dédié : HTML de la version précédente associé aux anciens fichiers rétablis, chargement JS et CSS confirmé ; échec du module simulé et bouton de secours visible ; mise à jour en attente sans interruption, reprise exacte d’un coup, résolution puis navigation hors ligne et nouvelle partie. Fichiers anciens exclus du précache vérifié.
+
+
+## Validation dans le cadre de l’équation — 20 octobre 2026
+
+- Déplacement du bouton Valider vers une coche dans le coin inférieur droit du cadre, avec nom accessible et infobulle « Valider l’équation ». Zone tactile de 44 × 44 px ; espace réservé sous les termes pour éviter les chevauchements.
+- Retrait de la validation de la barre inférieure. Les commandes Annuler, Indice et Étapes reviennent dans le flux de la page ; aucune barre fixe ne recouvre la coche. La coche est rendue inerte pendant une manipulation, comme les autres commandes.
+- TypeScript strict et compilation réussis. 35 contrôles navigateur mobile réussis, aucune erreur JavaScript : visibilité de la coche avec l’équation à l’écran, appartenance au cadre, absence de recouvrement par les termes, cible tactile et hit-test sur six formats portrait/paysage, gestes conservés et verrouillage pendant le glissement, validation du niveau et bouton Continuer. Rendu inspecté dans le navigateur intégré. Ces essais restent réalisés sur ordinateur avec émulation mobile.

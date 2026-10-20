@@ -45,7 +45,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         game.dataset.gesture = locked ? 'true' : 'false';
         game.setAttribute('aria-busy', String(locked));
         // Keep navigation, undo and validation inert until a drop has completed or rolled back.
-        for (const region of game.querySelectorAll<HTMLElement>('.context-panel,.operation-bar,.game-controls,.game-heading,.mission,.branches')) region.inert = locked;
+        for (const region of game.querySelectorAll<HTMLElement>('.context-panel,.operation-bar,.game-controls,.game-heading,.mission,.branches,.arena-validate')) region.inert = locked;
     }
     function releaseCapture() { if (pointer && arena.hasPointerCapture(pointer.id)) arena.releasePointerCapture(pointer.id); }
     function cleanup(restore: boolean) {

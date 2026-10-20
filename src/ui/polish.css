@@ -285,3 +285,15 @@ button.primary:hover { background: #b0ffe4; }
    superscripts on the baseline and insert gaps between a coefficient and x. */
 .level-formula { display:block; line-height:1.8; }
 .level-formula sup, .mirror-preview sup, .history-list strong sup, .branches sup, .result-solution sup, .solution-reveal sup { font-size:.6em; line-height:0; vertical-align:super; }
+
+
+/* Validation belongs to the equation; reserve a separate corner below its terms. */
+.game .arena:has(> .arena-validate) { position:relative; padding-bottom:62px; }
+.game .arena .arena-validate { position:absolute; right:12px; bottom:10px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:44px; min-width:44px; height:44px; min-height:44px; margin:0; padding:9px; border-radius:50%; }
+.arena-validate svg { width:25px; height:25px; fill:none; stroke:currentColor; stroke-width:2.7; stroke-linecap:round; stroke-linejoin:round; }
+.game[data-gesture=true] .arena-validate { opacity:.45; }
+/* The remaining utility buttons no longer need a fixed footer. */
+@media (max-width:700px), (max-height:500px) {
+  .game { padding-bottom:20px; }
+  .game .game-controls { position:static; margin-top:0; padding:12px 0 0; border-top:1px solid #54718e32; background:none; box-shadow:none; justify-content:flex-start; }
+}
