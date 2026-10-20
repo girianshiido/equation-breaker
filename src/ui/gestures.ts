@@ -1,5 +1,5 @@
 import { type Equation, nodeAt } from '../math/ast';
-import { gesturePlan, gripValue, type Grip, type GesturePlan, type DragAction } from '../math/gestures';
+import { gesturePlan, gripValue, groupedFactor, type Grip, type GesturePlan, type DragAction } from '../math/gestures';
 import { monomial } from '../math/normalize';
 import { blocks, math } from './math';
 import { format } from '../math/format';
@@ -10,6 +10,7 @@ interface Options {
     picked: PickedGrip | null;
     allowed: () => boolean;
     motion: () => boolean;
+    onSound: (cue: 'lift' | 'cross' | 'drop' | 'cancel') => void;
     onPick: (grip: PickedGrip) => void;
     onSelect: (ids: string[]) => void;
     onCommit: (action: DragAction) => void;
@@ -57,12 +58,13 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         const hadPreview = !!plan || !!rangeIds;
         if (pointer?.moved || hadPreview) suppressClickUntil = performance.now() + 550;
         cleanup(true);
-        if (hadPreview && notify) { options.announce('Geste annulé. L’équation et les compteurs sont inchangés.'); options.onCancel(); }
+        if (hadPreview && notify) { options.onSound('cancel'); options.announce('Geste annulé. L’équation et les compteurs sont inchangés.'); options.onCancel(); }
     }
     function begin(part: Grip) {
         if (!pointer || plan || !options.allowed()) return;
         try { plan = gesturePlan(options.equation, pointer.node, part); }
         catch { clearHold(); return; }
+        options.onSound('lift');
         pointer.part = part; arena.setPointerCapture(pointer.id); clearHold(); suppressClickUntil = performance.now() + 1000;
         setLocked(true); arena.classList.add('in-transit');
         const source = plan.source === 'l' ? left : right;
@@ -82,6 +84,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
     }
     function beginRange() {
         if (!pointer) return;
+        options.onSound('lift');
         clearHold(); rangeIds = [pointer.node]; arena.setPointerCapture(pointer.id);
         setLocked(true); arena.classList.add('range-selecting');
         arena.querySelector(`[data-node="${pointer.node}"]`)?.classList.add('range-selected');
@@ -94,6 +97,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         const boundary = horizontal ? separatorRect.x + separatorRect.width / 2 : separatorRect.y + separatorRect.height / 2;
         const nextCrossed = forward ? coordinate >= boundary : coordinate <= boundary;
         if (ghost.innerHTML === '' || nextCrossed !== crossed) {
+            if (nextCrossed && !crossed) options.onSound('cross');
             crossed = nextCrossed; ghost.innerHTML = math(crossed ? plan.arrived : plan.carried);
             ghost.classList.toggle('changed-sign', crossed && plan.action.part === 'term');
         }
@@ -107,13 +111,14 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         const target = (event.target as HTMLElement).closest<HTMLElement>('[data-node]');
         if (!target) return;
         const node = target.dataset.node!, term = nodeAt(options.equation, node), m = monomial(term);
-        if (!m || !m.q.n || m.degree > 2) return;
+        const group = m ? null : groupedFactor(term);
+        if ((!m || !m.q.n || m.degree > 2) && !group) return;
         const gripElement = (event.target as HTMLElement).closest<HTMLElement>('[data-grip]');
         const part = options.picked?.id === node ? options.picked.part : gripElement?.classList.contains('revealed-grip') ? 'coefficient' : 'term';
         pointer = { id: event.pointerId, node, part, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, moved: false };
-        const longPart = (gripElement?.dataset.grip as Exclude<Grip, 'term'> | undefined) ?? (m.q.d > 1n ? 'denominator' : 'coefficient');
-        if (m.degree === 2) { hold = window.setTimeout(beginRange, 420); return; }
-        if (m.degree) hold = window.setTimeout(() => {
+        const longPart = (gripElement?.dataset.grip as Exclude<Grip, 'term'> | undefined) ?? ((group?.q ?? m!.q).d > 1n ? 'denominator' : 'coefficient');
+        if (m?.degree === 2) { hold = window.setTimeout(beginRange, 420); return; }
+        if (m?.degree || group) hold = window.setTimeout(() => {
             if (!pointer) return;
             try { gripValue(term, longPart); begin(longPart); } catch { /* A hidden factor of 1 has no action. */ }
         }, 420);
@@ -146,6 +151,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         }
         const valid = !!arena.querySelector('.drop-over');
         if (!valid) { abort(); return; }
+        options.onSound('drop');
         finishing = true; const committed = plan; releaseCapture();
         ghost?.remove(); ghost = null; arena.classList.remove('in-transit'); arena.classList.add('landing');
         left.innerHTML = blocks(committed.landing.left, 'l', [], [], committed.destination === 'l');
@@ -156,7 +162,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         timer = window.setTimeout(() => {
             cleanup(false); suppressClickUntil = performance.now() + 550;
             options.onCommit(committed.action);
-        }, options.motion() ? 620 : 260);
+        }, options.motion() ? 380 : 180);
     }, { signal: signal.signal });
     arena.addEventListener('contextmenu', event => event.preventDefault(), { signal: signal.signal });
     arena.addEventListener('pointercancel', () => abort(), { signal: signal.signal });

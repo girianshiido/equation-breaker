@@ -52,6 +52,57 @@ describe('Manipulations progressives', () => {
         expect(format(p.inFlightSource)).toBe('x + 5');
         expect(equationText(p.result)).toBe('x + 5 = 6');
     });
+    it('détache le facteur d’une parenthèse sans la développer', () => {
+        const eq = equation('3(x+3)=6'), p = gesturePlan(eq, 'l', 'coefficient');
+        expect(format(p.inFlightSource)).toBe('x + 3');
+        expect(p.landing.right.kind).toBe('fraction');
+        expect(equationText(p.result)).toBe('x + 3 = 2');
+        expect(transform(eq, p.action).equation).toEqual(p.result);
+        expect(equationText(eq)).toBe('3(x + 3) = 6');
+    });
+    it('divise aussi les autres termes et fonctionne depuis la droite et avec un signe négatif', () => {
+        for (const [source, id, expected] of [
+            ['3(x+3)+5=6', 'l.0', 'x + 3 + 5/3 = 2'],
+            ['6=3(x+3)', 'r', '2 = x + 3'],
+            ['-3(x+3)=6', 'l', 'x + 3 = −2'],
+            ['3(x+3)+2(x-1)=6', 'l.0', 'x + 3 + 2/3(x − 1) = 2'],
+            ['3(x+3)/4=6', 'l', '1/4(x + 3) = 2'],
+        ]) {
+            const eq = equation(source), p = gesturePlan(eq, id, 'coefficient');
+            expect(equationText(p.result)).toBe(expected);
+            expect(solutionKey(solve(transform(eq, p.action).equation))).toBe(solutionKey(solve(eq)));
+        }
+    });
+    it('saisit également le dénominateur d’un groupe sans développer sa somme', () => {
+        const eq = equation('(x+3)/4=6'), p = gesturePlan(eq, 'l', 'denominator');
+        expect(equationText(p.result)).toBe('x + 3 = 24');
+        expect(transform(eq, p.action).equation).toEqual(p.result);
+        expect(() => gripValue(eq.left, 'coefficient')).toThrow();
+        const requested = equation('(x+4)/2=6');
+        expect(equationText(gesturePlan(requested, 'l', 'denominator').result)).toBe('x + 4 = 12');
+        expect(equationText(transform(requested, { kind: 'expand', id: 'l' }).equation)).toBe('1/2x + 2 = 6');
+    });
+    it('conserve les solutions avec les facteurs de groupes générés, sans extraire un terme intérieur', () => {
+        for (const world of [2, 3]) for (let seed = 0; seed < 150; seed++) {
+            const eq = generated(world, seed).initial;
+            for (const [side, expr] of [['l', eq.left], ['r', eq.right]] as const) {
+                const ids = expr.kind === 'sum' ? expr.terms.map((_, i) => `${side}.${i}`) : [side];
+                for (const id of ids) for (const part of ['coefficient', 'denominator'] as const) {
+                    try { gripValue(nodeAt(eq, id), part); } catch { continue; }
+                    const result = transform(eq, gesturePlan(eq, id, part).action).equation;
+                    expect(solutionKey(solve(result))).toBe(solutionKey(solve(eq)));
+                }
+            }
+        }
+        expect(() => gripValue(equation('3x+4=6').left, 'coefficient')).toThrow();
+    });
+    it('restaure un facteur de groupe détaché sans développer les parenthèses', () => {
+        const game = start(campaign[24]);
+        perform(game, { kind: 'drag', id: 'l', part: 'coefficient' });
+        const restored = restore(snapshot(game, 'campaign', 0, 0));
+        expect(equationText(restored!.game.s.eq)).toBe('x + 3 = 7');
+        expect(restored!.game.moves).toBe(1);
+    });
     it('rejette les groupes, les zéros et les faux facteurs', () => {
         expect(() => gesturePlan(equation('3(x+1)=12'), 'l', 'term')).toThrow();
         expect(() => gesturePlan(equation('x+3=8'), 'l', 'term')).toThrow();

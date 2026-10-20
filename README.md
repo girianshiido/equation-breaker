@@ -18,17 +18,22 @@
 | Zero Product | Factorisation rationnelle, produit nul, résolution effective de chaque branche, union sans doublon |
 | Quadratic Core | Discriminant exact, trois signes de Δ, racines doubles, rationnelles et radicaux exacts |
 
-Douze succès, étoiles, records, indicateurs de maîtrise par compétence et apparences déblocables. Sons synthétisés optionnels, animations courtes, contraste renforcé, texte agrandi et mode léger. Pas de compte, publicité, serveur, CDN ou télémétrie.
+Douze succès, étoiles, records, indicateurs de maîtrise par compétence et apparences déblocables. Sept bruitages mélodieux originaux en OGG/Opus, avec repli MP3, animations courtes, contraste renforcé, texte agrandi et mode léger. Pas de compte, publicité, serveur, CDN ou télémétrie.
 
 ## Jouer
 
+La typographie des nombres utilise Outfit, associée à DM Sans pour les textes. Les deux polices sont intégrées localement, utilisables hors ligne et distribuées sous licence OFL (sources et licences dans `public/fonts/`). Les membres restent côte à côte sur téléphone, avec un signe égal centré sur les expressions.
+
 Les termes apparaissent sans cadres permanents. Leurs zones tactiles restent généreuses ; une sélection se souligne, et la zone de dépôt apparaît pendant le geste.
+
+Le bouton haut-parleur, en haut, active ou coupe les sons ; ce choix est conservé. Saisie, franchissement, dépôt, fusion et réussite ont des notes distinctes, courtes et douces. Les fichiers sont précalculés par `scripts/generate-sounds.py`, décodés une fois et limités à quatre voix simultanées.
 
 ### Déplacer et saisir
 
-- **Glisser un terme entier vers l’autre membre** : il quitte son membre d’origine et change de signe en traversant le signe égal. Le dépôt affiche d’abord le calcul non réduit, puis fusionne les termes semblables. Par exemple, `3x + 5 = −3` donne visuellement `3x = −3 − 5`, puis `3x = −8`.
+- **Glisser un terme entier vers l’autre membre** : il quitte son membre d’origine et change de signe en traversant le signe égal. Le dépôt affiche d’abord le calcul non réduit, puis fusionne les termes semblables après 380 ms (180 ms en mode sans animations). Par exemple, `3x + 5 = −3` donne visuellement `3x = −3 − 5`, puis `3x = −8`.
 - **Appui prolongé sur un coefficient** : le facteur suit le doigt. Tout le membre de départ est déjà divisé, tandis que le membre d’arrivée reste inchangé jusqu’au dépôt. Pour `3x + 5 = −3`, on voit donc `x + 5/3` à gauche, puis `−3/3` à droite au dépôt, et enfin `−1`.
-- **Appui prolongé sur un dénominateur** : même principe, avec multiplication de tous les termes. `x/4 + 5 = −3` devient `x + 20 = −12`.
+- **Facteur devant une parenthèse** : maintenir le `3` de `3(x + 3) = 6` permet de le saisir sans développer. Le membre gauche devient `x + 3` pendant le trajet ; le dépôt donne `6/3`, puis `2`, à droite. Les autres termes éventuels du membre sont eux aussi divisés.
+- **Appui prolongé sur un dénominateur** : même principe, avec multiplication de tous les termes. `x/4 + 5 = −3` devient `x + 20 = −12`. On peut aussi saisir le `2` de `(x + 4)/2` : tout le numérateur devient `x + 4`, puis l’autre membre est multiplié par `2` au dépôt. Développer le groupe fractionné reste une autre possibilité.
 - Sélectionner **−x** révèle **(−1) × x**, dont le facteur peut être saisi. La touche **× (−1)** applique directement une multiplication aux deux membres.
 - Pendant une transformation incomplète, **le signe égal est suspendu**. Ce dessin transitoire n’est pas enregistré comme une égalité : seul le dépôt valide produit une transformation mathématique et compte un coup.
 - Lâcher hors de la zone, Échap, changement d’orientation ou interruption du geste : retour intégral à l’état d’origine, sans coup ni erreur supplémentaires.
@@ -94,7 +99,7 @@ Les équations à deux solutions irrationnelles gardent des radicaux exacts : au
 
 Progression et préférences restent dans le `localStorage` de cet appareil, sous `equation-breaker-v1`. Une sauvegarde de schéma inconnu/corrompue revient à un état valide avec avertissement. Un stockage indisponible laisse jouer en mémoire. L’export/import JSON se trouve dans les paramètres ; le remplacement et la remise à zéro demandent confirmation dans le jeu.
 
-Le service worker précache le jeu, tous ses niveaux, les icônes et ses styles. L’indication **Prêt pour le hors-ligne** apparaît seulement après vérification de la présence de tous les fichiers du build courant. Une nouvelle version reste en attente : elle n’interrompt pas silencieusement une équation. Le bouton de mise à jour sauvegarde la partie avant le rechargement.
+Le service worker précache le jeu, tous ses niveaux, les icônes, ses styles, les polices et les bruitages. L’indication **Prêt pour le hors-ligne** apparaît seulement après vérification de la présence de tous les fichiers du build courant. Une nouvelle version reste en attente : elle n’interrompt pas silencieusement une équation. Le bouton de mise à jour sauvegarde la partie avant le rechargement.
 
 Sur Android/Chrome/Edge, utiliser Installer dans le menu. Sur iPhone/iPad, Partager → Sur l’écran d’accueil. L’installation native dépend du navigateur ; le hors-ligne requiert la fin du premier cache complet.
 
@@ -109,6 +114,8 @@ pnpm preview --port 5194
 pnpm qa
 pnpm qa:updates
 pnpm qa:gestures
+pnpm qa:polish
+pnpm qa:audio
 ```
 
 Les tests Vitest couvrent les cas mathématiques de référence, les 72 résolutions complètes, 1 800 niveaux générés résolus, 1 200 transformations d’équivalence, les opérations interdites, l’annulation et la reconstruction des branches sauvegardées. Le scénario navigateur utilise uniquement les boutons réels : aucune commande de résolution n’est exposée par l’application.

@@ -24,7 +24,7 @@ export interface Transformation {
     label: string;
     mirror?: string;
 }
-export function expandable(e: Expr): boolean { return (e.kind === 'product' && e.factors.some(f => f.kind === 'sum' || expandable(f))) || (e.kind === 'power' && e.exponent === 2 && !monomial(e.base)) || (e.kind === 'fraction' && expandable(e.numerator)); }
+export function expandable(e: Expr): boolean { return (e.kind === 'product' && e.factors.some(f => f.kind === 'sum' || expandable(f))) || (e.kind === 'power' && e.exponent === 2 && !monomial(e.base)) || (e.kind === 'fraction' && (e.numerator.kind === 'sum' || expandable(e.numerator))); }
 function flatten(e: Expr): Expr { return e.kind === 'sum' ? sum(...e.terms.flatMap(t => t.kind === 'sum' ? t.terms : [t])) : e; }
 function localReplace(eq: Equation, id: string, next: Expr): Equation { const n = replace(eq, id, next); return { left: flatten(n.left), right: flatten(n.right) }; }
 function insert(e: Expr, value: Expr): Expr { const m = monomial(value); if (!m || m.degree > 1)
@@ -93,7 +93,7 @@ export function transform(eq: Equation, a: Action): Transformation {
             if (!expandable(e))
                 throw Error('Sélectionne un produit contenant une parenthèse.');
             next = localReplace(eq, a.id, fromPoly(normalize(e)));
-            why = 'Distributivité : chaque terme de la parenthèse est multiplié par le facteur, avec son signe.';
+            why = e.kind === 'fraction' ? 'Diviser une somme par une constante non nulle revient à diviser chacun de ses termes par cette constante.' : 'Distributivité : chaque terme de la parenthèse est multiplié par le facteur, avec son signe.';
             label = `Développer ${format(e)}`;
             break;
         }

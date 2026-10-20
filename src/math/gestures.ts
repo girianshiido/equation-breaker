@@ -35,16 +35,34 @@ function reduceTop(e: Expr): Expr {
     }
     return out.length ? sum(...out) : c(0);
 }
+/** Separate only outer constant factors; never extract a coefficient from inside a sum. */
+export function groupedFactor(e: Expr): { q: Rational; base: Expr } | null {
+    if (monomial(e) || (e.kind !== 'product' && e.kind !== 'fraction')) return null;
+    let q = rat(1);
+    const factors: Expr[] = [];
+    const visit = (f: Expr) => {
+        if (f.kind === 'constant') q = mul(q, f.value);
+        else if (f.kind === 'product') f.factors.forEach(visit);
+        else if (f.kind === 'fraction') { q = div(q, f.denominator); visit(f.numerator); }
+        else factors.push(f);
+    };
+    visit(e);
+    return factors.length ? { q, base: product(...factors) } : null;
+}
 function scaleSource(e: Expr, q: Rational): Expr {
-    return sum(...terms(e).map(t => {
+    return sum(...terms(e).flatMap(t => {
         const m = monomial(t);
-        return m ? mono(mul(m.q, q), m.degree) : product(c(q), t);
+        if (m) return [mono(mul(m.q, q), m.degree)];
+        const group = groupedFactor(t), base = group?.base ?? t;
+        const coefficient = mul(group?.q ?? rat(1), q);
+        return terms(one(coefficient) ? base : product(c(coefficient), base));
     }));
 }
 export function gripValue(e: Expr, grip: Exclude<Grip, 'term'>): Rational {
-    const m = monomial(e);
-    if (!m || !m.degree || zero(m.q)) throw Error('Sélectionne un terme non nul en x.');
-    const value = grip === 'denominator' ? rat(m.q.d) : rat(m.q.n);
+    const m = monomial(e), group = groupedFactor(e);
+    const q = m?.degree ? m.q : group?.q;
+    if (!q || zero(q)) throw Error('Sélectionne un terme en x ou un facteur constant devant un groupe.');
+    const value = grip === 'denominator' ? rat(q.d) : rat(q.n);
     if (one(value)) throw Error('Ce facteur vaut 1 et ne transforme pas l’équation.');
     return value;
 }
@@ -55,13 +73,13 @@ export function gesturePlan(eq: Equation, id: string, part: Grip): GesturePlan {
     const origin = sideExpr(eq, source), target = sideExpr(eq, destination), term = nodeAt(eq, id);
     if (origin.kind === 'sum' && !id.includes('.')) throw Error('Choisis un bloc de cette somme.');
     const m = monomial(term);
-    if (!m || zero(m.q) || m.degree > 1) throw Error('Développe ce groupe avant de déplacer ses termes.');
+    if (part === 'term' && (!m || zero(m.q) || m.degree > 1)) throw Error('Développe ce groupe pour déplacer ses termes, ou saisis son facteur par un appui long.');
     let inFlightSource: Expr, rawTarget: Expr, carried: Expr, arrived: Expr, mirror: string, label: string, why: string;
     if (part === 'term') {
         const index = origin.kind === 'sum' ? Number(id.split('.')[1]) : 0;
         const rest = terms(origin).filter((_, i) => i !== index);
         inFlightSource = rest.length ? sum(...rest) : c(0);
-        carried = tidy(term); arrived = mono(neg(m.q), m.degree);
+        carried = tidy(term); arrived = mono(neg(m!.q), m!.degree);
         rawTarget = sum(...terms(target), arrived);
         mirror = `+ (${format(arrived)})`;
         label = `Ajouter ${format(arrived)} aux deux membres · déplacement de ${format(term)}`;

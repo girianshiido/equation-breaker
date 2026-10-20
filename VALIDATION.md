@@ -68,3 +68,19 @@ Les paramètres et aides pédagogiques, les modalités de score et le périmètr
 - Reprise après rechargement des nouveaux événements ; alternative sans glissement au clavier ; annulation par Échap et changement d’orientation ; déplacements répétés sous CPU ×6.
 
 Les rapports détaillés sont `test-results/gesture-report.json`, `test-results/browser-report.json` et `test-results/browser-quick-report.json`. Les résultats des racines carrées rationnelles ouvrent des branches manipulables. Les cas irrationnels conservent deux relations symboliques et un résultat exact, sans prétendre offrir le glissement des radicaux dans des branches.
+
+
+## Mise à jour 1.2 — 20 octobre 2026
+
+- Typographie locale Outfit pour les expressions et DM Sans pour les textes ; aucune requête vers un service de polices à l’exécution. Licences OFL conservées.
+- Nouvelle présentation : membres côte à côte, labels hors de la ligne mathématique, termes sans cadres permanents. Trente contrôles d’alignement du signe égal sur six formats (320×568 à 1440×900), contrôle des polices effectivement chargées et des tailles homogènes des chiffres.
+- Simplification après dépôt : délai de 380 ms avec animations, 180 ms sans. Mesure navigateur locale : environ 398 ms jusqu’au résultat réduit.
+- Sept bruitages originaux précalculés : 7 OGG/Opus et 7 MP3. Décodage réel des 14 fichiers, absence de saturation, déclenchement par un vrai glissement, quatre voix simultanées au maximum, bouton muet et paramètres synchronisés, repli MP3 forcé et lecture après rechargement hors ligne.
+- Saisie des constantes devant une parenthèse et des dénominateurs de groupes : `3(x+3)=6` devient `x+3=2` sans développement. `(x+4)/2=6` devient `x+4=12`. Tests des signes négatifs, de l’autre sens, des autres termes du membre, des fractions composées, de la reprise et de l’alternative au clavier. Le développement reste disponible, y compris pour une somme divisée par une constante.
+- 20 scénarios navigateur de gestes réussis, dont les appuis prolongés tactiles sur groupes à 320×568.
+- 120 tests Vitest réussis, dont les propriétés de ces facteurs sur 300 équations générées supplémentaires. Régression navigateur des 72 niveaux : 187 contrôles réussis, sans erreur JavaScript.
+- Ralentissement CPU ×6, 30 sélections : médiane 16,8 ms, 95e percentile 18,6 ms, maximum 21,6 ms, pendant la passe locale complète. Aucun calcul audio par oscillateur pendant les gestes : buffers enregistrés et décodés une fois.
+
+Build final : environ 83 Ko de JavaScript et 51 Ko de CSS (42 Ko compressés ensemble), 69 Ko de polices et 49 Ko de sons dans les deux formats. Le dossier de publication occupe environ 324 Ko sur disque. Tous ces fichiers sont précachés pour le hors-ligne. Rapports : `polish-report.json`, `audio-report.json`, `gesture-report.json`, `browser-report.json` dans `test-results/`.
+
+Essais réalisés sur Chrome/macOS avec formats mobiles, entrées tactiles et CPU ralenti. Aucun téléphone physique ni Safari n’a été utilisé.

@@ -60,6 +60,21 @@ try {
     await open('w1-5'); await page.locator('[data-node="l.0"]').click(); await page.locator('[data-pick="coefficient"]').click(); assert.ok(await page.locator('.grip-picked').count()); assert.equal(await text('#moves'), '0');
     await page.locator('#coefficient').click(); await page.locator('#apply').click(); await done(); assert.equal(await text('.left-plate .fraction'), '3 2');
     check('No-drag alternative selects and applies the same factor');
+    await open('w3-1'); await page.locator('[data-node="l"]').click(); assert.ok(await page.locator('#expand').count()); assert.ok(await page.locator('[data-pick="coefficient"]').count());
+    await begin('[data-node="l"] [data-grip="coefficient"]', true); assert.equal(await text('.drag-token'), '2'); assert.equal((await text('.left-plate .blocks')).replaceAll(' ', ''), 'x+3'); assert.equal(await text('.right-plate .blocks'), '14');
+    await page.screenshot({path:'test-results/gesture-group-transit.png'});await cross(); await page.mouse.up(); assert.equal(await text('.right-plate .fraction'), '14 2'); await done(); assert.equal(await text('.right-plate .blocks'), '7');
+    await page.reload(); await page.locator('#resume').click(); assert.equal((await text('.left-plate .blocks')).replaceAll(' ', ''), 'x+3'); assert.equal(await text('#moves'), '1');
+    check('Hold outer parenthesis coefficient: no expansion, unilateral preview, deposit and persistence');
+    await page.locator('#undo').click();await page.locator('[data-node="l"]').click();await page.locator('[data-pick="coefficient"]').click();await page.locator('#coefficient').click();await page.locator('#apply').click();await done();assert.equal(await text('.right-plate .blocks'),'7');
+    check('Parenthesis coefficient also works without dragging');
+    await open('w4-6'); await page.locator('[data-node="l"]').click(); assert.ok(await page.locator('#expand').count());
+    await begin('[data-node="l"] [data-grip="denominator"]', true); assert.equal(await text('.drag-token'), '4'); assert.equal((await text('.left-plate .blocks')).replaceAll(' ', ''), 'x+2'); assert.equal(await text('.right-plate .fraction'), 'x − 1 2');
+    await cross(); await page.mouse.up(); await done(); assert.equal((await text('.left-plate .blocks')).replaceAll(' ', ''), 'x+2'); assert.match(await text('.right-plate .blocks'), /2.*\(.*x.*−.*1.*\)/);
+    check('Hold grouped numerator denominator multiplies the entire opposite member');
+    await open('w4-2'); await page.locator('[data-node="l"]').click(); await page.locator('[data-pick="denominator"]').click(); assert.ok(await page.locator('.grip-picked').count());
+    await page.locator('#denominator').click(); await page.locator('#apply').click(); await done(); assert.equal(await text('.right-plate .blocks'), '15'); assert.equal((await text('.left-plate .blocks')).replaceAll(' ', ''), '2x−1');
+    await page.locator('#undo').click(); await page.locator('[data-node="l"]').click(); await page.locator('#expand').click(); await done(); assert.ok(await page.locator('.left-plate .blocks .block').count()>1);
+    check('Grouped fractions retain keyboard denominator and expansion alternatives');
     await open('w6-2');
     const squareStart = await center('[data-node="l.0"]'), linearEnd = await center('[data-node="l.1"]');
     await page.mouse.move(squareStart.x, squareStart.y); await page.mouse.down(); await page.waitForTimeout(460);
@@ -87,6 +102,14 @@ try {
         for (let i = 1; i <= 8; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from.x + (to.x - from.x) * i / 8, y: from.y + (to.y - from.y) * i / 8 }] });
         await page.waitForTimeout(35); assert.ok(await page.locator('.drop-over').count()); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await done(); assert.equal(await text('.right-plate .blocks'), '8');
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)); check(`Real touch events ${size.width}×${size.height}`);
+    }
+    for (const id of ['w3-1','w4-2']) {
+        await page.setViewportSize({width:320,height:568});await open(id);await page.locator('#arena').scrollIntoViewIfNeeded();
+        const from=await center(id==='w3-1'?'[data-node="l"] [data-grip="coefficient"]':'[data-node="l"] [data-grip="denominator"]'),to=await center('.right-plate');
+        await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[from]});await page.waitForTimeout(460);assert.ok(await page.locator('.arena.in-transit').count());
+        for(let i=1;i<=8;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:from.x+(to.x-from.x)*i/8,y:from.y+(to.y-from.y)*i/8}]});
+        await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await done();assert.equal(await text('.right-plate .blocks'),id==='w3-1'?'7':'15');
+        check(`Real touch long press grouped factor ${id}`);
     }
     await page.setViewportSize({ width: 390, height: 844 }); await open('w1-5');
     await begin('[data-node="l.0"]', true); await page.keyboard.press('Escape'); await page.mouse.up(); assert.match(await text('.left-plate .blocks'), /2\s*x.*3/); assert.equal(await text('#moves'), '0');

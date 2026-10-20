@@ -1,5 +1,6 @@
 import { type Expr, terms } from '../math/ast';
 import { monomial } from '../math/normalize';
+import { groupedFactor } from '../math/gestures';
 import { neg, one, type Rational, str } from '../math/rational';
 import { escape, format, operandText } from '../math/format';
 const fraction = (q: Rational) => q.d === 1n ? escape(String(q.n)) : `<span class="fraction"><span>${escape(String(q.n))}</span><span>${escape(String(q.d))}</span></span>`;
@@ -24,9 +25,11 @@ export function math(e: Expr, raw = false): string {
 }
 function interactiveTerm(t: Expr, reveal: boolean): string {
     const m = monomial(t);
-    if (!m || !m.degree) return math(t);
-    const q = m.q, negative = q.n < 0n, abs = negative ? neg(q) : q;
-    const variable = `<i>x</i>${m.degree === 2 ? '<sup>2</sup>' : ''}`;
+    const group = m ? null : groupedFactor(t);
+    if ((!m || !m.degree) && !group) return math(t);
+    const q = group?.q ?? m!.q, negative = q.n < 0n, abs = negative ? neg(q) : q;
+    const needsParens = group?.base.kind === 'sum' && (abs.d === 1n || abs.n !== 1n || negative);
+    const variable = group ? (needsParens ? `<span class="paren">(</span>${math(group.base)}<span class="paren">)</span>` : math(group.base)) : `<i>x</i>${m!.degree === 2 ? '<sup>2</sup>' : ''}`;
     const coefficient = negative && abs.n === 1n && reveal ? '<span class="factor-grip revealed-grip" data-grip="coefficient">(−1)</span><span class="factor-times">×</span>' : `<span class="factor-grip" data-grip="coefficient">${negative ? '−' : ''}${abs.n === 1n ? '' : abs.n}</span>`;
     const numerator = coefficient + variable;
     return abs.d === 1n ? numerator : `<span class="fraction term-fraction"><span>${numerator}</span><span class="factor-grip" data-grip="denominator">${abs.d}</span></span>`;

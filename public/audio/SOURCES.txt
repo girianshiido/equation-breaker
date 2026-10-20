@@ -1,0 +1,1 @@
+Original melodic cues created for Equation Breaker. Synthesized from sine harmonics by scripts/generate-sounds.py. Distributed under the project MIT license. OGG/Opus with MP3 fallback.
