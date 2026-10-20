@@ -35,7 +35,7 @@ function writtenSideHTML(e:LinearExpr,row:number,side:Side,interactive:boolean):
  return expressionTerms(e).map((node,index)=>{
   const {negative,absolute}=signedExpression(node),simple=simpleTerm(node),j=simple?.variable;
   const content=`<span class="sys-sign ${index?'sys-binary-sign':'sys-unary-sign'}">${negative?'−':index?'+':''}</span><span>${writtenMath(absolute)}</span>`;
-  return interactive?`<button class="sys-variable sys-term" data-written-term="${index}" data-system-term="${j===null?'constant':j===undefined?'group':j}" ${j===null||j===undefined?'':`data-variable="${j}"`} data-row="${row}" data-side="${side}" aria-label="Sélectionner ${escape(expressionText(node,variables))} dans la ligne ${row+1}"><span>${content}</span></button>`:`<span class="sys-term">${content}</span>`;
+  return interactive?`<button class="sys-variable sys-term" aria-keyshortcuts="Alt+${side==='left'?'ArrowRight':'ArrowLeft'}" data-written-term="${index}" data-system-term="${j===null?'constant':j===undefined?'group':j}" ${j===null||j===undefined?'':`data-variable="${j}"`} data-row="${row}" data-side="${side}" aria-label="Sélectionner ${escape(expressionText(node,variables))} dans la ligne ${row+1}"><span>${content}</span></button>`:`<span class="sys-term">${content}</span>`;
  }).join('');
 }
 export function rowSides(row:Row,rowIndex:number,interactive=true):[string,string]{
@@ -44,7 +44,7 @@ export function rowSides(row:Row,rowIndex:number,interactive=true):[string,strin
  const renderSide=(coefficients:Rational[],constant:Rational,side:Side)=>{
   let seen=false;
   const term=(q:Rational,j:number|null)=>{const binary=seen,sign=q.n<0n?'−':seen?'+':'';seen=true;const abs=q.n<0n?neg(q):q;const value=j===null?(q.d===1n?qMath(abs):`<span class="fraction"><span>${abs.n}</span><span data-system-grip="denominator">${abs.d}</span></span>`):variableTerm(q,variables[j]);const content=`<span class="sys-sign ${binary?'sys-binary-sign':'sys-unary-sign'}">${sign}</span><span>${value}</span>`;
-   return interactive?`<button class="sys-variable sys-term" data-system-term="${j===null?'constant':j}" ${j===null?'':`data-variable="${j}"`} data-side="${side}" data-row="${rowIndex}" aria-label="Sélectionner ${j===null?'la constante':variables[j]} dans la ligne ${rowIndex+1}, membre ${side==='left'?'gauche':'droit'}"><span>${content}</span></button>`:`<span class="sys-term">${content}</span>`;};
+   return interactive?`<button class="sys-variable sys-term" aria-keyshortcuts="Alt+${side==='left'?'ArrowRight':'ArrowLeft'}" data-system-term="${j===null?'constant':j}" ${j===null?'':`data-variable="${j}"`} data-side="${side}" data-row="${rowIndex}" aria-label="Sélectionner ${j===null?'la constante':variables[j]} dans la ligne ${rowIndex+1}, membre ${side==='left'?'gauche':'droit'}"><span>${content}</span></button>`:`<span class="sys-term">${content}</span>`;};
   const body=coefficients.map((q,j)=>zero(q)?'':term(q,j)).join('')+(!zero(constant)?term(constant,null):'');
   return seen?body:'0';
  };

@@ -239,3 +239,10 @@ Contrôle visuel de cette présentation dans le navigateur intégré à une larg
 - Les anciens événements de transposition sans fusion restent rejouables afin de préserver les parties enregistrées, y compris lorsqu’une fusion explicite les suit. Les nouveaux événements conservent le choix de fusion à l’arrivée pour la reprise et l’annulation.
 - 179 tests automatiques réussis, dont 29 systèmes : exemple exact de l’utilisateur, monômes et fractions dans les deux sens, groupes conservés, ancien et nouveau journal de partie. Vérification TypeScript réussie.
 - 61 contrôles navigateur : 21 niveaux, sept formats, et nouveaux essais ciblés à 320×480, 390×844 et 1280×800 sous CPU ×6. Souris et événements tactiles : juste après le =, en haut et en bas hors de la hauteur des caractères, bord éloigné, trajet inverse ; fusion automatique à chaque arrivée valable. Dépôt sur autre ligne/hors du cadre annulé, autres lignes conservées, annulation/reprise vérifiées, facteur déposé dans la marge et 5x=5 obtenu en un geste. Aucun téléphone physique revendiqué.
+
+
+## Version 1.5.3 — passage de terme comme geste de base — 21 octobre 2026
+
+- Retrait des boutons « Passer … à droite/gauche » du panneau de sélection. La transposition se fait par glissement direct dans la ligne ; zone élargie et fusion automatique conservées. Le raccourci Alt + flèche droite/gauche sur le terme focalisé assure l’accès au clavier, annoncé par aria-keyshortcuts et dans l’aide.
+- 179 tests automatiques et vérification TypeScript réussis. 62 contrôles navigateur réussis, sans erreur JavaScript ; tous les passages de termes des 21 parcours sont exécutés par de vrais glissements. Absence du bouton vérifiée sur le panneau, raccourcis dans les deux sens, explications facultatives, dépôts en marge à la souris et au toucher, sauvegarde et annulation contrôlés.
+- CPU ×6, 30 sélections jusqu’à l’image suivante : médiane 16,4 ms, 95e percentile 19,5 ms, maximum 21,2 ms. Émulation sur ordinateur, sans téléphone physique.
