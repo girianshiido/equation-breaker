@@ -15,8 +15,8 @@
 | Face-à-face | Inconnue dans les deux membres, fusion locale, plusieurs stratégies, aucune solution et identités |
 | Explosion | Distributivité, signes devant les groupes, plusieurs parenthèses, réduction |
 | Fraction Lab | Coefficients rationnels exacts, dénominateurs constants, groupes fractionnés |
-| Zero Product | Factorisation rationnelle, produit nul, résolution effective de chaque branche, union sans doublon |
-| Quadratic Core | Discriminant exact, trois signes de Δ, racines doubles, rationnelles et radicaux exacts |
+| Zero Product | Facteur commun choisi, carrés préparés et différence de carrés, produit nul et union sans doublon |
+| Quadratic Core | Complétion du carré avec compensation, identités choisies, racines rationnelles ou irrationnelles manipulables |
 
 Douze succès, étoiles, records, indicateurs de maîtrise par compétence et apparences déblocables. Sept bruitages mélodieux originaux en OGG/Opus, avec repli MP3, animations courtes, contraste renforcé, texte agrandi et mode léger. Pas de compte, publicité, serveur, CDN ou télémétrie.
 
@@ -47,15 +47,17 @@ Un toucher court sélectionne un terme ; deux touchers sélectionnent des termes
 
 ### Choisir une méthode
 
-Les parenthèses se développent, les trinômes se factorisent et les produits nuls ouvrent des branches. Le déplacement n’est pas imposé comme méthode universelle.
+Les trinômes n’ont plus de bouton de factorisation globale ni de commande de discriminant. Le joueur prépare et choisit l’identité à appliquer ; les indices suivent ces mêmes manipulations.
 
-Un carré nul ne crée qu’une porte : `(x−2)² = 0 ⇔ x−2 = 0`. Les facteurs ayant les mêmes zéros sont regroupés ; les facteurs distincts restent séparés.
+- **Écrire comme un carré**, après sélection d’un nombre ou d’un terme en x² : `−9 → −(3)²`, `−1/4 → −(1/2)²`, `2x² → (√2 x)²`. Le signe moins reste à l’extérieur.
+- Sélectionner deux termes préparés comme **a² − b²** donne accès à **a² − b² = (a + b)(a − b)**. Les facteurs linéaires sont réduits lisiblement, sans rechercher automatiquement les racines du trinôme.
+- Sélectionner **ax² et bx**, par deux touchers ou un appui prolongé suivi d’un balayage, permet de **compléter le carré sur place**. `x² − 5x + 6 = 0` devient `(x − 5/2)² − 25/4 + 6 = 0`. La compensation reste un terme séparé : le joueur fusionne ensuite `−25/4` et `6`, écrit `−1/4` comme `−(1/2)²`, puis choisit la différence de carrés. Les coefficients positifs non moniques sont acceptés avec des racines exactes ; un coefficient négatif demande d’abord la multiplication par −1.
+- La même paire permet de choisir un **facteur commun** : `4x² + 2x` donne au choix `x(4x + 2)` ou `2x(2x + 1)`. Il s’agit de factoriser, jamais de diviser l’équation par x : la racine zéro reste présente.
+- Un carré plus une constante **strictement positive**, égal à zéro, permet de conclure qu’il n’existe aucune solution réelle. Une constante nulle garde l’unique porte du carré nul.
 
-La validation d’une porte ouvre automatiquement la prochaine porte inachevée. La validation de la dernière réunit les solutions sans doublon et termine l’équation. Ce parcours s’applique aussi aux branches obtenues par extraction des racines d’un carré, y compris lorsqu’une seule racine existe.
+Quand un carré est isolé, **Extraire les racines** reste une autre méthode : valeur négative → aucune solution réelle ; zéro → une porte ; valeur positive → deux portes. Les racines irrationnelles sont désormais des constantes exactes manipulables dans les termes, les fractions et les coefficients. Par exemple, dans `√2 x + 3 = 0`, on peut déplacer `3`, puis saisir `√2` pour diviser les deux membres. Les aperçus et les résultats dessinent une barre de racine extensible couvrant toute la fraction ou tout le nombre.
 
-Dans le monde 6, maintenir le doigt sur **x²**, puis le faire glisser sur le terme en **x**, surligne le groupe. On peut aussi sélectionner les deux termes par touchers courts ou au clavier. **Compléter le carré** indique la quantité exacte ajoutée aux deux membres et montre un aperçu : pour `x² − 5x`, il faut ajouter **25/4**, et non 5/4. Les autres termes de la somme restent présents. Un coefficient de x² différent de 1 doit d’abord être ramené à 1 par division des deux membres.
-
-Quand le carré est isolé, **Extraire les racines** traite les cas : valeur négative → aucune solution réelle ; zéro → une branche ; valeur positive → deux signes. Si la racine carrée est rationnelle, chaque branche est une équation manipulable à résoudre, puis les solutions sont réunies. Les racines irrationnelles sont présentées sous deux équations symboliques et donnent un ensemble exact ; leur déplacement symbolique dans des branches interactives n’est pas implémenté. Le discriminant reste disponible comme autre méthode.
+Un carré nul ne crée qu’une porte : `(x−2)² = 0 ⇔ x−2 = 0`. Les facteurs ayant les mêmes zéros sont regroupés ; les facteurs distincts restent séparés. Valider une porte ouvre automatiquement la prochaine porte inachevée ; valider la dernière réunit les solutions sans doublon et termine l’équation.
 
 **Valider** termine le niveau lorsque x est isolé, que des constantes permettent une conclusion, ou que les racines sont construites. Les indices sont gradués et ne jouent pas à la place de l’élève. L’annulation conserve les tentatives. Les niveaux, statistiques et préférences existants restent compatibles avec cette version.
 
@@ -91,6 +93,7 @@ BASE_PATH=/equation-breaker/ pnpm build
 ## Architecture et garanties
 
 - `src/math/rational.ts` : fractions irréductibles en `bigint`, dénominateur positif, racine carrée entière.
+- `src/math/exact.ts` : constantes multiquadratiques exactes en bigint, opérations réversibles, signe par intervalles rationnels et polynômes bornés mis en cache.
 - `src/math/ast.ts` : arbres d’expressions et analyseur récursif ; aucun `eval`.
 - `src/math/normalize.ts` : polynômes de degré ≤ 2 pour vérifier les identités, indépendamment de la présentation.
 - `src/math/transformations.ts` : règles locales et préconditions, sans déplacement magique de terme. Chaque transformation est vérifiée par proportionnalité non nulle du polynôme différence.
@@ -100,7 +103,7 @@ BASE_PATH=/equation-breaker/ pnpm build
 - `src/app/persistence.ts` : schéma versionné, validation, bornage, reprise par rejeu des événements ; sérialisation des opérandes exacts sans `bigint` brut.
 - `src/ui/` et `src/main.ts` : présentation, navigation interne sans dépendance aux réécritures du serveur, événements, audio facultatif.
 
-Les divisions et multiplications réversibles n’acceptent que des constantes rationnelles non nulles. Les dénominateurs contenant x et les degrés supérieurs à 2 sont refusés. Un produit nul donne une **union**, y compris pour une racine répétée. La validation finale compare aussi l’ensemble de solutions à celui de l’équation initiale. Les calculs ne dépendent pas des couleurs, des animations ou du nombre de clics.
+Le formulaire libre accepte les constantes rationnelles non nulles ; la saisie d’un coefficient contenant une racine permet aussi une division algébrique exacte non nulle. Les dénominateurs contenant x et les degrés supérieurs à 2 sont refusés. Un produit nul donne une **union**, y compris pour une racine répétée. La validation finale compare aussi l’ensemble de solutions à celui de l’équation initiale. Les calculs ne dépendent pas des couleurs, des animations ou du nombre de clics.
 
 Les équations à deux solutions irrationnelles gardent des radicaux exacts : aucune approximation flottante ne décide de l’exactitude. L’extraction des facteurs carrés est bornée pour préserver la réactivité ; des radicandes très grands peuvent conserver une écriture exacte non complètement simplifiée. Les coefficients et la longueur des entrées sont bornés. Les niveaux livrés ne rencontrent pas cette limite.
 
@@ -157,5 +160,5 @@ Le script de vérification publique compare les SHA-256 de chaque fichier servi 
 - Les statistiques pédagogiques sont des indicateurs d’usage local, pas une évaluation scolaire certifiée ni un classement mondial.
 - Les essais mobiles utilisent les dimensions tactiles et le ralentissement CPU d’un navigateur de bureau. Ils ne remplacent pas une séance sur des appareils Android modestes et iOS réels.
 - Les identifiants de sélection sont des chemins dans l’AST. Une transformation efface la sélection et verrouille brièvement les entrées pour éviter les références périmées et les doubles applications.
-- La factorisation proposée se limite aux factorisations rationnelles prises en charge et vérifiées. La méthode du discriminant traite aussi les cas sans factorisation rationnelle.
+- Les identités proposées portent sur les expressions réelles de degré au plus 2, avec coefficients rationnels au départ. Les champs de racines sont bornés à 16 composantes pour préserver la réactivité. Les anciennes actions de factorisation globale et de discriminant restent lisibles uniquement pour rejouer les sauvegardes précédentes.
 - Les 72 niveaux constituent une campagne complète et finie ; davantage de séquences écrites, une révision espacée adaptative, le défi quotidien et un mode enseignant sont des évolutions distinctes, non annoncées comme présentes.

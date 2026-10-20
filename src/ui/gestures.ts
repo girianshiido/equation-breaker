@@ -1,5 +1,7 @@
+import { signedSquare } from '../math/squares';
+import { exactMono, rational } from '../math/exact';
 import { type Equation, nodeAt } from '../math/ast';
-import { gesturePlan, gripValue, groupedFactor, type Grip, type GesturePlan, type DragAction } from '../math/gestures';
+import { gesturePlan, gripValue, gripExpression, groupedFactor, type Grip, type GesturePlan, type DragAction } from '../math/gestures';
 import { monomial } from '../math/normalize';
 import { blocks, math } from './math';
 import { format } from '../math/format';
@@ -114,16 +116,16 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         const target = (event.target as HTMLElement).closest<HTMLElement>('[data-node]');
         if (!target) return;
         const node = target.dataset.node!, term = nodeAt(options.equation, node), m = monomial(term);
-        const group = m ? null : groupedFactor(term);
-        if ((!m || !m.q.n || m.degree > 2) && !group) return;
+        const group = m ? null : groupedFactor(term), exact=exactMono(term),square=signedSquare(term);
+        if ((!m || !m.q.n || m.degree > 2) && !group && !exact && !square) return;
         const gripElement = (event.target as HTMLElement).closest<HTMLElement>('[data-grip]');
         const part = options.picked?.id === node ? options.picked.part : gripElement?.classList.contains('revealed-grip') ? 'coefficient' : 'term';
         pointer = { id: event.pointerId, node, part, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, moved: false };
-        const longPart = (gripElement?.dataset.grip as Exclude<Grip, 'term'> | undefined) ?? ((group?.q ?? m!.q).d > 1n ? 'rational-coefficient' : 'coefficient');
-        if (m?.degree === 2) { hold = window.setTimeout(beginRange, 420); return; }
-        if (m?.degree || group) hold = window.setTimeout(() => {
+        const longPart = (gripElement?.dataset.grip as Exclude<Grip, 'term'> | undefined) ?? (exact?.degree===1&&!rational(exact.q)?'algebraic-coefficient':(group?.q ?? m?.q ?? (exact?rational(exact.q):null) ?? {d:1n}).d > 1n ? 'rational-coefficient' : 'coefficient');
+        if (m?.degree === 2 || square && !exact) { hold = window.setTimeout(beginRange, 420); return; }
+        if (m?.degree || group || exact?.degree) hold = window.setTimeout(() => {
             if (!pointer) return;
-            try { gripValue(term, longPart); begin(longPart); } catch { /* A hidden factor of 1 has no action. */ }
+            try { gripExpression(term, longPart); begin(longPart); } catch { /* A hidden factor of 1 has no action. */ }
         }, 420);
     }, { signal: signal.signal });
     window.addEventListener('pointermove', event => {

@@ -1,13 +1,14 @@
-import { squareEquation } from '../math/squares';
+import { exactPoly, exactMono, sZero, rational, sSign, rootExpr, scalar, sEqual, scalarExpr, sNeg } from '../math/exact';
+import { squareEquation, positiveSquareSum, differenceOfSquares, squareCompletion, writeSquare, commonFactor } from '../math/squares';
 import { format, operandText } from '../math/format';
-import { type Equation, c, nodeAt, terms, x } from '../math/ast';
+import { type Equation, type Expr, c, product, nodeAt, terms, x } from '../math/ast';
 import { type Action, transform, zeroBranches, quadraticInfo, expandable, factorable } from '../math/transformations';
 import { normalize, monomial, isZero, mono } from '../math/normalize';
 import { rat, zero, one, neg, str, sqrtRational } from '../math/rational';
-import { terminal, solve, union, solutionKey, type Solution, solutionText } from '../math/solve';
+import { terminal, solve, union, solutionKey, solutionsEqual, type Solution, solutionText } from '../math/solve';
 import { equationText } from '../math/format';
 import type { Level } from '../levels/campaign';
-export type Event = Action | { kind: 'square-roots' } | {
+export type Event = Action | { kind: 'square-roots'; exact?:boolean } | {kind:'no-real'} | {
     kind: 'split';
     distinct?: boolean;
 } | {
@@ -81,26 +82,30 @@ export function perform(g: Game, event: Event): void {
     else if (event.kind === 'confirm-branch') {
         if (s.branch < 0 || !terminal(s.eq))
             throw Error('Isole x dans cette branche avant de la valider.');
-        const solution = solve(s.eq), key = solutionKey(solution);
+        const solution = solve(s.eq);
         // Confirm equivalent doors together when replaying a save from an older version.
-        s.branches.forEach((eq, i) => { if (solutionKey(solve(eq)) === key) s.completed[i] = solution; });
+        s.branches.forEach((eq, i) => { if (solutionsEqual(solve(eq),solution)) s.completed[i] = solution; });
         s.label = `Branche ${s.branch + 1} validée : ${solutionText(s.completed[s.branch]!)}`;
         s.why = 'Explore les autres branches puis réunis leurs solutions.';
     }
     else if (event.kind === 'square-roots') {
-        if (g.level.world < 5 || s.branches.length) throw Error('L’extraction des racines appartient au monde 6.');
+        if (g.level.world < 4 || s.branches.length) throw Error('Isole un carré dans une équation du second degré.');
         const square = squareEquation(s.eq);
         s.delta = false;
         const exactRoot = sqrtRational(square.value);
-        if (exactRoot) {
-            const roots = zero(exactRoot) ? [exactRoot] : [exactRoot, neg(exactRoot)];
-            s.branches = roots.map(root => ({ left: square.base, right: c(root) }));
-            s.completed = roots.map(() => null); s.branch = 0; s.eq = s.branches[0]; s.answer = null;
-            s.label = `${format(square.base)} = ${str(exactRoot)}${roots.length === 2 ? ` ou ${format(square.base)} = ${str(neg(exactRoot))}` : ''}`;
-        } else s.answer = solve(s.eq);
-        if (square.value.n < 0n) s.label = 'Un carré réel ne peut pas être négatif';
-        else if (!exactRoot) s.label = `${format(square.base)} = √(${operandText(square.value)}) ou ${format(square.base)} = −√(${operandText(square.value)})`;
-        s.why = square.value.n < 0n ? 'Aucune solution réelle : un carré est toujours positif ou nul.' : 'Y² = k : si k = 0, Y = 0 ; si k > 0, Y = √k ou Y = −√k. On traite les deux signes et on réunit les solutions sans doublon.';
+        if(square.value.n<0n){s.answer={kind:'none'};s.label='Un carré réel ne peut pas être négatif';}
+        else if(event.exact!==false||exactRoot){
+            const root=event.exact===false?c(exactRoot!):rootExpr(square.value);
+            const roots=zero(square.value)?[root]:[root,product(c(-1),root)];
+            s.branches=roots.map(right=>({left:square.base,right}));s.completed=roots.map(()=>null);s.branch=0;s.eq=s.branches[0];s.answer=null;
+            s.label=`${format(square.base)} = ${format(root)}${roots.length===2?` ou ${format(square.base)} = −${format(root)}`:''}`;
+        }else{s.answer=solve(s.eq);s.label='Construire les deux racines exactes';}
+        s.why='X² = k : si k = 0, une seule porte X = 0 ; si k > 0, X = √k ou X = −√k. Les racines et les fractions restent exactes.';
+    }
+    else if(event.kind==='no-real'){
+        if(!positiveSquareSum(s.eq))throw Error('Il faut un carré plus une constante strictement positive, égal à zéro.');
+        s.answer={kind:'none'};s.delta=false;s.label='Aucune solution réelle : un carré plus un nombre strictement positif';
+        s.why='Un carré réel est positif ou nul. Lui ajouter une quantité strictement positive ne peut jamais donner zéro.';
     }
     else if (event.kind === 'delta') {
         if (g.level.world < 5 || s.branches.length)
@@ -125,7 +130,7 @@ export function perform(g: Game, event: Event): void {
         s.why = 'On prend l’union de toutes les solutions et on retire les doublons.';
     }
     else {
-        if (event.kind === 'complete-square' && g.level.world < 5) throw Error('La complétion du carré appartient au monde 6.');
+        if (event.kind === 'complete-square' && g.level.world < 4) throw Error('La complétion du carré appartient aux équations du second degré.');
         const tr = transform(s.eq, event);
         s = { ...s, eq: tr.equation, label: tr.label, why: tr.why, mirror: tr.mirror, delta: false, answer: null };
         if (s.branch >= 0) {
@@ -148,12 +153,12 @@ export function perform(g: Game, event: Event): void {
 }
 /** Keep the active representative when replaying an older save with duplicate doors. */
 export function visibleBranchIndices(s: Snapshot): number[] {
-    const representatives = new Map<string, number>();
-    s.branches.forEach((eq, i) => {
-        const key = solutionKey(solve(eq));
-        if (!representatives.has(key) || i === s.branch) representatives.set(key, i);
+    const representatives:number[]=[];
+    s.branches.forEach((eq,i)=>{
+        const existing=representatives.findIndex(j=>solutionsEqual(solve(s.branches[j]),solve(eq)));
+        if(existing<0)representatives.push(i);else if(i===s.branch)representatives[existing]=i;
     });
-    return [...representatives.values()];
+    return representatives;
 }
 export function validate(g: Game): 'branch' | 'win' {
     if (g.s.branches.length && !g.s.answer) {
@@ -169,74 +174,55 @@ export function validate(g: Game): 'branch' | 'win' {
     const s = g.s;
     if (!s.answer && !terminal(s.eq)) throw Error('L’équation est équivalente, mais pas encore résolue. Isole x ou construis l’ensemble des racines.');
     const answer = s.answer ?? solve(s.eq);
-    if (solutionKey(answer) !== solutionKey(solve(g.level.initial))) throw Error('Il manque une solution. Vérifie toutes les branches.');
+    if (!solutionsEqual(answer,solve(g.level.initial))) throw Error('Il manque une solution. Vérifie toutes les branches.');
     s.answer = answer; g.won = true; return 'win';
 }
 export function undo(g: Game): boolean { if (g.won || !g.history.length)
     return false; g.s = g.history.pop()!; g.events.pop(); g.hintStage = 0; return true; }
 export function score(g: Pick<Game, 'errors' | 'hints' | 'moves' | 'level'>): number { return g.errors === 0 && g.hints === 0 && g.moves <= g.level.budget ? 3 : g.errors <= 1 && g.hints <= 1 ? 2 : 1; }
-export function suggestion(g: Game): {
-    text: string;
-    action?: Event;
-    ids?: string[];
-} {
-    const { eq, branches, completed } = g.s;
-    if (branches.length && completed.every(Boolean) && !g.s.answer)
-        return { text: 'Toutes les portes sont résolues. Réunis leurs solutions.', action: { kind: 'collect' } };
-    if (branches.length && completed[g.s.branch]) {
-        const index = completed.findIndex(s => !s);
-        if (index >= 0)
-            return { text: 'Explore maintenant une autre branche.', action: { kind: 'branch', index } };
+export function suggestion(g: Game): { text:string; action?:Event; ids?:string[] } {
+    const {eq,branches,completed}=g.s;
+    if(branches.length&&completed.every(Boolean)&&!g.s.answer)return {text:'Toutes les portes sont résolues.',action:{kind:'collect'}};
+    if(branches.length&&completed[g.s.branch]){const index=completed.findIndex(s=>!s);if(index>=0)return{text:'Explore la prochaine porte.',action:{kind:'branch',index}};}
+    if(terminal(eq)||g.s.answer)return{text:'La forme de résolution est atteinte. Tu peux valider.'};
+    if(g.level.world>=4&&!branches.length){
+        if(positiveSquareSum(eq))return{text:'Un carré plus un nombre strictement positif ne peut pas être nul.',action:{kind:'no-real'}};
+        try{zeroBranches(eq);return{text:'Le produit est nul. Ouvre ses portes.',action:{kind:'split'}};}catch{/* Prepare the factors. */}
+        try{squareEquation(eq);return{text:'Le carré est isolé : utilise les deux signes, ou une seule porte pour zéro.',action:{kind:'square-roots'}};}catch{/* Prepare the square. */}
     }
-    if (terminal(eq) || g.s.answer)
-        return { text: 'La forme de résolution est atteinte. Tu peux valider.' };
-    if (g.level.world >= 4 && !branches.length) {
-        try {
-            zeroBranches(eq);
-            return { text: 'Le produit est égal à zéro. Ouvre ses branches.', action: { kind: 'split' } };
+    const lp=exactPoly(eq.left),rp=exactPoly(eq.right),quadratic=!sZero(lp[2])||!sZero(rp[2]);
+    const idsFor=(side:'l'|'r',e:Expr)=>terms(e).map((_,i)=>e.kind==='sum'?`${side}.${i}`:side);
+    if(quadratic&&g.level.world>=4&&!branches.length){
+        if(!isZero(eq.right)){
+            const tt=terms(eq.right),index=tt.findIndex(t=>{const m=exactMono(t);return !!m&&!sZero(m.q);});
+            if(index>=0)return{text:'Ramène ce terme à gauche pour obtenir zéro à droite.',action:{kind:'drag',id:idsFor('r',eq.right)[index],part:'term'}};
         }
-        catch { /* Not a zero product. */ }
+        const tt=terms(eq.left),ids=idsFor('l',eq.left);
+        for(let i=0;i<tt.length;i++)for(let j=i+1;j<tt.length;j++){
+            const a=exactMono(tt[i]),b=exactMono(tt[j]);
+            if(a&&b&&a.degree===b.degree)return{text:'Fusionne ces termes semblables.',action:{kind:'combine',ids:[ids[i],ids[j]]},ids:[ids[i],ids[j]]};
+            try{differenceOfSquares(eq,[ids[i],ids[j]]);return{text:'Les deux carrés sont prêts : utilise a² − b².',action:{kind:'difference-squares',ids:[ids[i],ids[j]]},ids:[ids[i],ids[j]]};}catch{/* Not a prepared difference. */}
+        }
+        const a=rational(lp[2]);if(a&&a.n<0n)return{text:'Multiplie par −1 pour obtenir un coefficient positif devant x².',action:{kind:'multiply',constant:rat(-1)}};
+        for(let i=0;i<tt.length;i++)for(let j=i+1;j<tt.length;j++){
+            if(sZero(lp[0]))try{commonFactor(eq,[ids[i],ids[j]],true);return{text:'Sélectionne les deux termes et mets leur facteur commun en évidence.',action:{kind:'factor-common',ids:[ids[i],ids[j]],maximal:true},ids:[ids[i],ids[j]]};}catch{/* No common x. */}
+            try{squareCompletion(eq,[ids[i],ids[j]]);return{text:'Sélectionne ax² et bx pour compléter le carré avec sa compensation.',action:{kind:'complete-square',ids:[ids[i],ids[j]]},ids:[ids[i],ids[j]]};}catch{/* Not this pair. */}
+        }
+        for(let i=0;i<tt.length;i++)try{writeSquare(tt[i]);return{text:'Écris ce terme comme un carré avant de choisir l’identité.',action:{kind:'write-square',id:ids[i]},ids:[ids[i]]};}catch{/* Already a square. */}
     }
-    for (const side of ['l', 'r'] as const) {
-        const e = side === 'l' ? eq.left : eq.right;
-        const tt = terms(e);
-        for (let i = 0; i < tt.length; i++) {
-            const id = e.kind === 'sum' ? `${side}.${i}` : side;
-            if (expandable(tt[i]))
-                return { text: 'Développe la parenthèse en distribuant le facteur à tous ses termes.', action: { kind: 'expand', id }, ids: [id] };
-            if (tt[i].kind === 'fraction' && !monomial(tt[i]))
-                return { text: 'Simplifie la fraction à dénominateur constant.', action: { kind: 'simplify', id }, ids: [id] };
-            for (let j = i + 1; j < tt.length; j++) {
-                const a = monomial(tt[i]), b = monomial(tt[j]);
-                if (a && b && a.degree === b.degree)
-                    return { text: 'Fusionne ces deux termes semblables dans le même membre.', action: { kind: 'combine', ids: [`${side}.${i}`, `${side}.${j}`] }, ids: [`${side}.${i}`, `${side}.${j}`] };
-            }
+    for(const side of ['l','r'] as const){
+        const e=side==='l'?eq.left:eq.right,tt=terms(e),ids=idsFor(side,e);
+        for(let i=0;i<tt.length;i++){
+            for(let j=i+1;j<tt.length;j++){const a=exactMono(tt[i]),b=exactMono(tt[j]);if(a&&b&&a.degree===b.degree)return{text:'Fusionne ces deux termes semblables.',action:{kind:'combine',ids:[ids[i],ids[j]]},ids:[ids[i],ids[j]]};}
+            if(expandable(tt[i]))return{text:'Développe la parenthèse avec les signes de ses termes.',action:{kind:'expand',id:ids[i]},ids:[ids[i]]};
+            if(tt[i].kind==='fraction'&&!monomial(tt[i]))return{text:'Simplifie cette fraction.',action:{kind:'simplify',id:ids[i]},ids:[ids[i]]};
         }
     }
-    if (g.level.world >= 4 && !branches.length) {
-        try {
-            zeroBranches(eq);
-            return { text: 'Le produit est égal à zéro. Ouvre ses branches.', action: { kind: 'split' } };
-        }
-        catch { /* Not a zero product. */ }
+    for(const [side,e,degree] of [['r',eq.right,1],['l',eq.left,0]] as const){
+        const tt=terms(e),ids=idsFor(side,e),i=tt.findIndex(t=>exactMono(t)?.degree===degree&&!sZero(exactMono(t)!.q));
+        if(i>=0)return{text:'Déplace ce terme dans l’autre membre en ajoutant son opposé.',action:{kind:'drag',id:ids[i],part:'term'},ids:[ids[i]]};
     }
-    if (g.level.world === 4 && !branches.length && isZero(eq.right) && factorable(eq.left))
-        return { text: 'Factorise le membre de gauche pour faire apparaître un produit nul.', action: { kind: 'factor', id: 'l' }, ids: ['l'] };
-    const l = normalize(eq.left), r = normalize(eq.right);
-    if (!zero(l[2]) || !zero(r[2])) {
-        if (!isZero(eq.right)) {
-            const index = [0, 1].find(i => !zero(r[i]));
-            if (index !== undefined)
-                return { text: 'Ramène les termes à gauche en ajoutant leur opposé aux deux membres.', action: { kind: 'add', expression: mono(neg(r[index]), index) } };
-        }
-        if (g.level.world === 5)
-            return g.s.delta ? { text: 'Applique la formule exacte des racines.', action: { kind: 'roots' } } : { text: 'Identifie a, b et c puis calcule le discriminant.', action: { kind: 'delta' } };
-    }
-    if (!zero(r[1]))
-        return { text: 'Ajoute l’opposé du terme en x de droite aux deux membres.', action: { kind: 'add', expression: mono(neg(r[1]), 1) } };
-    if (!zero(l[0]))
-        return { text: 'Neutralise la constante de gauche en ajoutant son opposé aux deux membres.', action: { kind: 'add', expression: c(neg(l[0])) } };
-    if (!zero(l[1]) && !one(l[1]))
-        return { text: 'Divise les deux membres par le coefficient de x, qui est non nul.', action: { kind: 'divide', constant: l[1] } };
-    return { text: 'Réduis les termes semblables pour mettre en évidence une identité ou une contradiction.' };
+    const tt=terms(eq.left),ids=idsFor('l',eq.left),i=tt.findIndex(t=>exactMono(t)?.degree===1);
+    if(i>=0){const q=exactMono(tt[i])!.q,r=rational(q);if(!sEqual(q,scalar(1)))return{text:'Divise les deux membres par le coefficient exact de x.',action:{kind:'drag',id:ids[i],part:r?'rational-coefficient':'algebraic-coefficient'},ids:[ids[i]]};}
+    return{text:'Réduis l’expression ou prépare une identité remarquable.'};
 }

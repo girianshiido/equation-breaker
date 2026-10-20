@@ -107,12 +107,12 @@ try {
     const squareStart = await center('[data-node="l.0"]'), linearEnd = await center('[data-node="l.1"]');
     await page.mouse.move(squareStart.x, squareStart.y); await page.mouse.down(); await page.waitForTimeout(460);
     await page.mouse.move(linearEnd.x, linearEnd.y, { steps: 6 }); await page.mouse.up();
-    assert.equal(await page.locator('.block.selected').count(), 2); assert.match(await text('#complete-square'), /25\/4/);
+    assert.equal(await page.locator('.block.selected').count(), 2); assert.match(await text('#complete-square'), /Compléter le carré/);
     await page.locator('#complete-square').click(); assert.match(await text('#dialog-content'), /25\/4/); await page.locator('#apply').click(); await done();
-    assert.ok(await page.locator('.left-plate .block.group').count());
-    await begin('[data-node="l.1"]'); await cross(); await page.mouse.up(); await done();
-    assert.equal(await text('.right-plate .fraction'), '1 4');
-    await page.locator('#square-roots').click(); await done(); assert.equal(await page.locator('[data-branch]').count(), 2);
+    await page.locator('[data-node="l.1"]').click();await page.locator('[data-node="l.2"]').click();await page.locator('#combine').click();await done();
+    await page.locator('[data-node="l.1"]').click();await page.locator('#write-square').click();await page.locator('#apply').click();await done();
+    await page.locator('[data-node="l.0"]').click();await page.locator('[data-node="l.1"]').click();await page.locator('#difference-squares').click();await page.locator('#apply').click();await done();
+    await page.locator('#split').click();await done();assert.equal(await page.locator('[data-branch]').count(),2);
     for (const index of [0, 1]) {
         assert.ok(await page.locator(`[data-branch="${index}"].active`).count());
         await begin('[data-node="l.1"]'); await cross(); await page.mouse.up(); await done(); await page.locator('#validate').click();

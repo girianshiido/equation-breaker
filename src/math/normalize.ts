@@ -1,3 +1,4 @@
+import { exactPoly, rationalPoly, hasExact, sZero } from './exact';
 import { type Expr, c, x, product, sum } from './ast';
 import { type Rational, rat, add, mul, div, neg, zero, one, equal } from './rational';
 export type Poly = [
@@ -18,12 +19,15 @@ export function times(a: Poly, b: Poly): Poly { const r = empty(); for (let i = 
         else
             r[i + j] = add(r[i + j], mul(a[i], b[j]));
     } return r; }
-export function normalize(e: Expr): Poly { switch (e.kind) {
+export function normalize(e: Expr): Poly { if(hasExact(e)) return rationalPoly(exactPoly(e)); switch (e.kind) {
     case 'constant': return [e.value, rat(0), rat(0)];
     case 'variable': return [rat(0), rat(1), rat(0)];
     case 'sum': return e.terms.map(normalize).reduce(plus, empty());
     case 'product': return e.factors.map(normalize).reduce(times, [rat(1), rat(0), rat(0)]);
     case 'fraction': return scale(normalize(e.numerator), div(rat(1), e.denominator));
+    case 'radical':
+    case 'square':
+    case 'quotient': return rationalPoly(exactPoly(e));
     case 'power': {
         const p = normalize(e.base);
         return e.exponent === 0 ? [rat(1), rat(0), rat(0)] : e.exponent === 1 ? p : times(p, p);
@@ -37,10 +41,10 @@ export function fromPoly(p: Poly): Expr { const tt = [2, 1, 0].filter(i => !zero
 export function monomial(e: Expr): {
     q: Rational;
     degree: number;
-} | null { if (e.kind === 'sum')
+} | null { if (e.kind === 'sum' || e.kind === 'square')
     return null; if (e.kind === 'product' && e.factors.some(f => !monomial(f)))
     return null; if (e.kind === 'fraction' && !monomial(e.numerator))
     return null; if (e.kind === 'power' && !monomial(e.base))
-    return null; const p = normalize(e), ii = [0, 1, 2].filter(i => !zero(p[i])); return ii.length <= 1 ? { q: p[ii[0] ?? 0], degree: ii[0] ?? 0 } : null; }
+    return null; let p:Poly; try{p=normalize(e);}catch{return null;} const ii = [0, 1, 2].filter(i => !zero(p[i])); return ii.length <= 1 ? { q: p[ii[0] ?? 0], degree: ii[0] ?? 0 } : null; }
 export function tidy(e: Expr): Expr { const m = monomial(e); return m ? mono(m.q, m.degree) : e; }
-export const isZero = (e: Expr) => normalize(e).every(zero);
+export const isZero = (e: Expr) => exactPoly(e).every(sZero);

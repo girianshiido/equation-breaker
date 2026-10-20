@@ -13,7 +13,7 @@ export const worlds: World[] = [
     { name: 'Explosion', subtitle: 'Déploie les parenthèses', symbol: '✳', color: '#ffb86b', rule: 'Distribue le facteur à tous les termes, avec leurs signes. Ensuite, fusionne les termes semblables.', example: '−2(x + 3) = −2x − 6' },
     { name: 'Fraction Lab', subtitle: 'La précision au fragment près', symbol: '½', color: '#bfa0ff', rule: 'Les fractions sont exactes. Diviser par une fraction non nulle revient à multiplier par son inverse. Aucun dénominateur ne contient x.', example: '(3/4)x = 3 ⇔ x = 3 × 4/3 = 4' },
     { name: 'Zero Product', subtitle: 'Ouvre toutes les portes', symbol: '⋈', color: '#ff8eae', rule: 'Un produit est nul si au moins un facteur est nul. Résous chaque branche, puis réunis leurs solutions sans doublon.', example: '(x − 2)(x + 3) = 0 ⇔ x − 2 = 0 ou x + 3 = 0' },
-    { name: 'Quadratic Core', subtitle: 'Explore les racines', symbol: 'Δ', color: '#f1db82', rule: 'Pour ax² + bx + c = 0, a ≠ 0 : Δ = b² − 4ac. Δ < 0 : aucune racine réelle ; Δ = 0 : −b/(2a) ; Δ > 0 : (−b ± √Δ)/(2a).', example: 'x² − 5x + 6 = 0 : Δ = 25 − 24 = 1' }
+    { name: 'Quadratic Core', subtitle: 'Explore les racines', symbol: '²', color: '#f1db82', rule: 'Prépare les carrés, choisis une identité remarquable ou complète le carré avec sa compensation. Un facteur commun peut aussi faire apparaître un produit nul.', example: 'x² − 5x + 6 = (x − 5/2)² − 1/4 = (x − 2)(x − 3)' }
 ];
 export interface Level {
     id: string;

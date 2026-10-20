@@ -1,4 +1,5 @@
-import { squareCompletion, squareEquation } from './math/squares';
+import { exactMono, rational, exactMonoExpr, sNeg, sZero } from './math/exact';
+import { squareCompletion, squareEquation, writeSquare, differenceOfSquares, commonFactor, positiveSquareSum } from './math/squares';
 import './ui/styles.css';
 import './ui/polish.css';
 import { SoundBank, type Cue } from './ui/sound';
@@ -13,11 +14,11 @@ import { terms, nodeAt, parse, c, type Expr } from './math/ast';
 import { monomial, isZero } from './math/normalize';
 import { rat, neg, one, zero, str, readRational } from './math/rational';
 import { format, escape, equationText, operandText } from './math/format';
-import { transform, expandable, factorable, zeroBranches, quadraticInfo, type Action } from './math/transformations';
-import { solve, solutionText, terminal, discriminant } from './math/solve';
-import { math, blocks } from './ui/math';
+import { transform, expandable, factorable, zeroBranches, type Action } from './math/transformations';
+import { solve, solutionText, terminal } from './math/solve';
+import { math, blocks, solutionMath } from './ui/math';
 import { bindGestures, type PickedGrip } from './ui/gestures';
-import { gripValue, groupedFactor } from './math/gestures';
+import { gripValue, groupedFactor, gripExpression } from './math/gestures';
 installTouchGuards();
 let pickedGrip: PickedGrip | null = null;
 let disposeGestures: (() => void) | null = null;
@@ -89,17 +90,22 @@ function available() {
     let html = '';
     const eq = g.s.eq;
     if (selected.length === 2) {
-        const monomials = selected.map(id => monomial(nodeAt(eq, id)));
+        const monomials = selected.map(id => exactMono(nodeAt(eq, id)));
         if (monomials[0] && monomials[1] && monomials[0].degree === monomials[1].degree) html += button('combine', '⊕ Fusionner', 'action');
-        if (g.level.world === 5) try {
-            const completion = squareCompletion(eq, selected);
-            html += button('complete-square', `Compléter le carré (+${operandText(completion.added)})`, 'action special');
-        } catch { /* This pair has no monic quadratic and linear term. */ }
+        if (g.level.world >= 4) {
+            try { squareCompletion(eq, selected); html += button('complete-square', 'Compléter le carré', 'action special'); } catch { /* Requires ax² and bx, a positive. */ }
+            try { differenceOfSquares(eq,selected); html += button('difference-squares','a² − b² = (a + b)(a − b)','action special'); } catch { /* Prepare both squares first. */ }
+            try {
+                const common=commonFactor(eq,selected,true);
+                html += button('factor-x','Mettre x en facteur','action');
+                if(!one(common.q))html += button('factor-common',`Mettre ${format(common.factor)} en facteur`,'action special');
+            } catch { /* Requires a common variable factor. */ }
+        }
     }
     if (selected.length === 1) {
-        const e = nodeAt(eq, selected[0]), m = monomial(e), group = groupedFactor(e);
-        if (m && !zero(m.q) && m.degree <= 1)
-            html += button('opposite', `Ajouter l’opposé ${format({ kind: 'constant', value: neg(m.q) })}${m.degree ? 'x' : ''} aux deux membres`, 'action balance-action');
+        const e = nodeAt(eq, selected[0]), m = monomial(e), exact=exactMono(e), irrational=!!exact&&exact.degree===1&&!rational(exact.q), group = irrational?null:groupedFactor(e);
+        if (exact && !sZero(exact.q) && exact.degree <= 2)
+            html += button('opposite', `Ajouter l’opposé ${format(exactMonoExpr(sNeg(exact.q),exact.degree))} aux deux membres`, 'action balance-action');
         if ((m && m.degree === 1) || group) {
             const q = m?.q ?? group!.q;
             const divisorPart = pickedGrip?.id === selected[0] && pickedGrip.part !== 'denominator' ? pickedGrip.part : q.d > 1n ? 'rational-coefficient' : 'coefficient';
@@ -114,12 +120,15 @@ function available() {
                 } catch { /* No detachable factor of 1. */ }
             }
         }
+        if(irrational){
+            html += button('exact-coefficient',`÷ (${format(gripExpression(e,'algebraic-coefficient'))}) aux deux membres`,'action');
+            html += '<button type="button" class="action grip-action" data-pick="algebraic-coefficient">Saisir le coefficient avec sa racine</button>';
+        }
+        if(g.level.world>=4)try{writeSquare(e);html+=button('write-square','(…)² · Écrire comme un carré','action special');}catch{/* Already a square or unsuitable. */}
         if (expandable(e))
             html += button('expand', '✳ Développer', 'action');
         if (e.kind === 'fraction')
             html += button('simplify', '½ Simplifier', 'action');
-        if (g.level.world >= 4 && factorable(e))
-            html += button('factor', '⋈ Factoriser', 'action');
     }
     if (g.level.world >= 4 && !g.s.branches.length) {
         try {
@@ -127,25 +136,19 @@ function available() {
             html += button('split', branches.length === 1 ? 'X² = 0 ⇒ X = 0 · Une seule porte' : '⋈ Ouvrir les branches', 'action special');
         }
         catch { /* no product */ }
-        if (!selected.length && factorable(eq.left) && isZero(eq.right))
-            html += button('factor-left', '⋈ Factoriser à gauche', 'action special');
     }
-    if (g.level.world === 5 && !g.s.branches.length) {
+    if (g.level.world >= 4 && !g.s.branches.length) {
         try { squareEquation(eq); html += button('square-roots', '± Extraire les racines', 'action special'); } catch { /* Isolate the square first. */ }
-        try {
-            quadraticInfo(eq);
-            html += g.s.delta ? button('roots', 'Construire les racines exactes', 'action special') : button('delta', 'Δ Calculer le discriminant', 'action special');
-        }
-        catch { /* not ready */ }
+        if(positiveSquareSum(eq))html+=button('no-real','Un carré + un positif : aucune solution réelle','action special');
     }
     if (g.s.branches.length && g.s.completed.every(Boolean) && !g.s.answer)
         html += button('collect', '∪ Réunir les solutions', 'action special');
     return html || '<p class="selection-help">Touche un bloc pour découvrir ses transformations.</p>';
 }
 function gameScreen() { if (!g)
-    return; screen = 'game'; const w = worlds[g.level.world], s = g.s; const selection = selected.length ? selected.map(id => format(nodeAt(s.eq, id))).join(' ; ') : 'Aucun bloc sélectionné'; shell(`<section class="game" aria-busy="${busy}" style="--world:${w.color}"><div class="game-heading"><button id="pause" class="icon-button" aria-label="Mettre en pause">Ⅱ</button><div><p class="eyebrow">${mode === 'campaign' ? `MONDE ${g.level.world + 1} · ${g.level.index + 1} / 12` : mode === 'practice' ? 'LABORATOIRE' : `ARCADE · ${arcade + 1} / 5 · COMBO ${combo}`}</p><h1>${escape(g.level.title)}</h1></div><span class="world-symbol small">${w.symbol}</span></div><div class="mission"><span><span class="tiny-square"></span> ${g.level.goal}</span><button class="text-button" id="rule">La règle ↗</button></div><div class="game-meter"><span><b id="moves">${g.moves}</b> transformations</span><span>Objectif ★★★ : ≤ ${g.level.budget} · sans erreur ni indice</span>${save.prefs.timer ? `<time id="timer">${statTime(g.elapsed + Date.now() - g.started)}</time>` : ''}</div>${s.branches.length ? `<div class="branches" aria-label="Branches du produit nul">${visibleBranchIndices(s).map((i, visibleIndex) => { const eq = s.branches[i]; return `<button data-branch="${i}" class="${s.branch === i ? 'active' : ''}">Porte ${visibleIndex + 1} ${s.completed[i] ? '✓' : ''}<span>${escape(equationText(eq))}</span></button>`; }).join('')}</div>` : ''}<div class="arena ${Math.max(format(s.eq.left).length, format(s.eq.right).length) > 12 ? 'arena-dense' : ''}" id="arena"><div class="plate left-plate"><button class="plate-label" data-whole="l" aria-label="Sélectionner tout le membre gauche">MEMBRE GAUCHE <span>⌜</span></button><div class="blocks">${blocks(s.eq.left, 'l', selected, highlight)}</div>${s.mirror ? `<div class="mirror">${escape(s.mirror)}</div>` : ''}</div><div class="equal-sign" aria-label="égal à">=</div><div class="plate right-plate"><button class="plate-label" data-whole="r" aria-label="Sélectionner tout le membre droit">MEMBRE DROIT <span>⌝</span></button><div class="blocks">${blocks(s.eq.right, 'r', selected, highlight)}</div>${s.mirror ? `<div class="mirror">${escape(s.mirror)}</div>` : ''}</div></div>${s.answer ? `<div class="solution-reveal">${escape(solutionText(s.answer))}</div>${g.events.at(-1)?.kind === 'square-roots' ? `<p class="root-relations">${escape(s.label)}</p>` : ''}` : ''}${s.delta ? `<div class="delta-reveal">${escape(s.label)}<span>${escape(s.why)}</span></div>` : ''}<div class="context-panel"><div class="selection-caption"><span>SÉLECTION</span><span>${escape(selection)}</span>${selected.length ? button('clear', '× Effacer', 'text-button') : ''}</div><div class="context-actions">${available()}</div></div><div class="operation-bar"><span>LES DEUX MEMBRES</span>${button('operation', '+ / − / × / ÷', 'operation-button')}${button('negate', '× (−1)', 'negate-button', 'aria-label="Multiplier les deux membres par moins un"')}<button id="why" class="text-button">Pourquoi ?</button></div><p class="feedback ${feedback ? 'has-message' : ''}" role="status">${escape(feedback || s.label)}</p><div class="game-controls">${button('undo', '↶ <span>Annuler</span>', 'utility', g.history.length ? '' : 'disabled')}${button('hint', '◉ <span>Indice</span>', 'utility')}${button('history', '≡ <span>Étapes</span>', 'utility')}${button('validate', 'Valider <span>✓</span>', 'primary validate')}</div><div class="game-notes"><span>${g.errors} erreur${g.errors > 1 ? 's' : ''} · ${g.hints} indice${g.hints > 1 ? 's' : ''}</span><span>Glisse un terme · Appui long : facteur · sur x : fraction entière</span></div></section>`, 'worlds'); bindGame(); }
+    return; screen = 'game'; const w = worlds[g.level.world], s = g.s; const selection = selected.length ? selected.map(id => format(nodeAt(s.eq, id))).join(' ; ') : 'Aucun bloc sélectionné'; shell(`<section class="game" aria-busy="${busy}" style="--world:${w.color}"><div class="game-heading"><button id="pause" class="icon-button" aria-label="Mettre en pause">Ⅱ</button><div><p class="eyebrow">${mode === 'campaign' ? `MONDE ${g.level.world + 1} · ${g.level.index + 1} / 12` : mode === 'practice' ? 'LABORATOIRE' : `ARCADE · ${arcade + 1} / 5 · COMBO ${combo}`}</p><h1>${escape(g.level.title)}</h1></div><span class="world-symbol small">${w.symbol}</span></div><div class="mission"><span><span class="tiny-square"></span> ${g.level.goal}</span><button class="text-button" id="rule">La règle ↗</button></div><div class="game-meter"><span><b id="moves">${g.moves}</b> transformations</span><span>Objectif ★★★ : ≤ ${g.level.budget} · sans erreur ni indice</span>${save.prefs.timer ? `<time id="timer">${statTime(g.elapsed + Date.now() - g.started)}</time>` : ''}</div>${s.branches.length ? `<div class="branches" aria-label="Branches du produit nul">${visibleBranchIndices(s).map((i, visibleIndex) => { const eq = s.branches[i]; return `<button data-branch="${i}" class="${s.branch === i ? 'active' : ''}">Porte ${visibleIndex + 1} ${s.completed[i] ? '✓' : ''}<span>${math(eq.left)} = ${math(eq.right)}</span></button>`; }).join('')}</div>` : ''}<div class="arena ${Math.max(format(s.eq.left).length, format(s.eq.right).length) > 12 ? 'arena-dense' : ''}" id="arena"><div class="plate left-plate"><button class="plate-label" data-whole="l" aria-label="Sélectionner tout le membre gauche">MEMBRE GAUCHE <span>⌜</span></button><div class="blocks">${blocks(s.eq.left, 'l', selected, highlight)}</div>${s.mirror ? `<div class="mirror">${escape(s.mirror)}</div>` : ''}</div><div class="equal-sign" aria-label="égal à">=</div><div class="plate right-plate"><button class="plate-label" data-whole="r" aria-label="Sélectionner tout le membre droit">MEMBRE DROIT <span>⌝</span></button><div class="blocks">${blocks(s.eq.right, 'r', selected, highlight)}</div>${s.mirror ? `<div class="mirror">${escape(s.mirror)}</div>` : ''}</div></div>${s.answer ? `<div class="solution-reveal" role="math" aria-label="${escape(solutionText(s.answer))}">${solutionMath(s.answer)}</div>${g.events.at(-1)?.kind === 'square-roots' ? `<p class="root-relations">${escape(s.label)}</p>` : ''}` : ''}${s.delta ? `<div class="delta-reveal">${escape(s.label)}<span>${escape(s.why)}</span></div>` : ''}<div class="context-panel"><div class="selection-caption"><span>SÉLECTION</span><span>${escape(selection)}</span>${selected.length ? button('clear', '× Effacer', 'text-button') : ''}</div><div class="context-actions">${available()}</div></div><div class="operation-bar"><span>LES DEUX MEMBRES</span>${button('operation', '+ / − / × / ÷', 'operation-button')}${button('negate', '× (−1)', 'negate-button', 'aria-label="Multiplier les deux membres par moins un"')}<button id="why" class="text-button">Pourquoi ?</button></div><p class="feedback ${feedback ? 'has-message' : ''}" role="status">${escape(feedback || s.label)}</p><div class="game-controls">${button('undo', '↶ <span>Annuler</span>', 'utility', g.history.length ? '' : 'disabled')}${button('hint', '◉ <span>Indice</span>', 'utility')}${button('history', '≡ <span>Étapes</span>', 'utility')}${button('validate', 'Valider <span>✓</span>', 'primary validate')}</div><div class="game-notes"><span>${g.errors} erreur${g.errors > 1 ? 's' : ''} · ${g.hints} indice${g.hints > 1 ? 's' : ''}</span><span>Glisse un terme · Appui long : facteur · sur x : fraction entière</span></div></section>`, 'worlds'); bindGame(); }
 function bindGame() { if (!g)
-    return; document.querySelectorAll<HTMLButtonElement>('[data-node]').forEach(b => b.onclick = () => select(b.dataset.node!)); document.querySelectorAll<HTMLButtonElement>('[data-whole]').forEach(b => b.onclick = () => { selected = [b.dataset.whole!]; highlight = []; gameScreen(); }); bind('clear', () => { selected = []; pickedGrip = null; gameScreen(); }); bind('opposite', () => { const e = nodeAt(g!.s.eq, selected[0]), m = monomial(e)!; preview({ kind: 'add', expression: m.degree ? { kind: 'product', factors: [c(neg(m.q)), { kind: 'variable' }] } : c(neg(m.q)) }); }); bind('coefficient', () => {
+    return; document.querySelectorAll<HTMLButtonElement>('[data-node]').forEach(b => b.onclick = () => select(b.dataset.node!)); document.querySelectorAll<HTMLButtonElement>('[data-whole]').forEach(b => b.onclick = () => { selected = [b.dataset.whole!]; highlight = []; gameScreen(); }); bind('clear', () => { selected = []; pickedGrip = null; gameScreen(); }); bind('opposite', () => { preview({kind:'drag',id:selected[0],part:'term'}); }); bind('coefficient', () => {
     const id = selected[0], e = nodeAt(g!.s.eq, id), q = monomial(e)?.q ?? groupedFactor(e)!.q;
     const part = pickedGrip?.id === id && pickedGrip.part !== 'denominator' ? pickedGrip.part : q.d > 1n ? 'rational-coefficient' : 'coefficient';
     preview({ kind: 'drag', id, part });
@@ -161,6 +164,12 @@ function bindGame() { if (!g)
     gameScreen();
 } }); bind('validate', check); bind('hint', hint); bind('why', () => show('Pourquoi cette transformation ?', `<p>${escape(g!.s.why)}</p><div class="rule-example">${escape(equationText(g!.s.eq))}</div>`)); bind('history', historyDialog); bind('rule', () => show(worlds[g!.level.world].name, `<p>${escape(worlds[g!.level.world].rule)}</p><div class="rule-example">${escape(worlds[g!.level.world].example)}</div><p>Pour trois étoiles : au plus ${g!.level.budget} transformations, sans erreur ni indice. C’est un objectif raisonnable, sans prétention d’optimalité. Le temps ne compte pas.</p>`)); bind('pause', pause);
     bind('complete-square', () => preview({ kind: 'complete-square', ids: [...selected] }));
+    bind('write-square',()=>preview({kind:'write-square',id:selected[0]}));
+    bind('difference-squares',()=>preview({kind:'difference-squares',ids:[...selected]}));
+    bind('factor-x',()=>preview({kind:'factor-common',ids:[...selected]}));
+    bind('factor-common',()=>preview({kind:'factor-common',ids:[...selected],maximal:true}));
+    bind('exact-coefficient',()=>preview({kind:'drag',id:selected[0],part:'algebraic-coefficient'}));
+    bind('no-real',()=>execute({kind:'no-real'}));
     bind('square-roots', () => execute({ kind: 'square-roots' }));
     bind('negate', () => execute({ kind: 'multiply', constant: rat(-1) }));
     bind('denominator', () => { if (selected.length === 1) preview(groupedFactor(nodeAt(g!.s.eq, selected[0])) ? { kind: 'drag', id: selected[0], part: 'denominator' } : { kind: 'multiply', constant: gripValue(nodeAt(g!.s.eq, selected[0]), 'denominator') }); });
@@ -187,8 +196,8 @@ function bindGame() { if (!g)
 function pickGrip(pick: PickedGrip) {
     if (!g || busy) return;
     pickedGrip = pick; selected = [pick.id];
-    const value = gripValue(nodeAt(g.s.eq, pick.id), pick.part);
-    feedback = `${operandText(value)} est saisi. Glisse ce facteur dans l’autre membre, ou utilise le bouton ${pick.part !== 'denominator' ? '÷' : '×'} aux deux membres.`;
+    const value = gripExpression(nodeAt(g.s.eq, pick.id), pick.part);
+    feedback = `${format(value)} est saisi. Glisse ce facteur dans l’autre membre, ou utilise le bouton ${pick.part !== 'denominator' ? '÷' : '×'} aux deux membres.`;
     gameScreen();
 }
 function select(id: string) { if (busy || !g || g.won)
@@ -235,7 +244,8 @@ function preview(action: Action) { if (!g || busy)
     return; try {
     const tr = transform(g.s.eq, action);
     pending = action;
-    show('Conserver l’équilibre', `<p>${escape(tr.label)}</p><div class="mirror-preview"><div>${math(g.s.eq.left)}</div><b>=</b><div>${math(g.s.eq.right)}</div><span>${escape(tr.mirror || '')}</span><span></span><span>${escape(tr.mirror || '')}</span><div>${math(tr.equation.left)}</div><b>=</b><div>${math(tr.equation.right)}</div></div><p>${escape(tr.why)}</p><div class="dialog-actions">${button('apply', 'Appliquer aux deux membres', 'primary')}${button('cancel-preview', 'Annuler', 'secondary')}</div>`);
+    const local=action.kind==='write-square'||action.kind==='difference-squares'||action.kind==='factor-common'||action.kind==='complete-square'&&action.local!==false;
+    show(local?'Transformer l’écriture':'Conserver l’équilibre', `<p>${escape(tr.label)}</p><div class="mirror-preview"><div>${math(g.s.eq.left)}</div><b>=</b><div>${math(g.s.eq.right)}</div><span>${escape(tr.mirror || '')}</span><span></span><span>${escape(tr.mirror || '')}</span><div>${math(tr.equation.left)}</div><b>=</b><div>${math(tr.equation.right)}</div></div><p>${escape(tr.why)}</p><div class="dialog-actions">${button('apply', local?'Appliquer cette écriture':'Appliquer aux deux membres', 'primary')}${button('cancel-preview', 'Annuler', 'secondary')}</div>`);
     bind('apply', () => { const ev = pending; pending = null; dialog.close(); if (ev)
         execute(ev); });
     bind('cancel-preview', () => dialog.close());
@@ -247,7 +257,7 @@ function operationDialog() { show('Une opération, deux membres', `<p>Choisis li
     let ev: Action;
     if (type === 'add' || type === 'subtract') {
         const expression = parse(s), m = monomial(expression);
-        if (!m || m.degree > 1)
+        if (!m || m.degree > 2)
             throw Error('Choisis un entier, une fraction ou un terme en x.');
         ev = { kind: 'add', expression: type === 'subtract' ? { kind: 'product', factors: [c(-1), expression] } : expression };
     }
@@ -273,7 +283,7 @@ function hint() { if (!g || busy)
     show('Aperçu de la prochaine étape', `<p>${escape(detail)}</p><p class="muted">À toi de sélectionner et d’appliquer l’opération.</p>`);
 } }
 function historyDialog() { if (!g)
-    return; show('Ton chemin algébrique', `<p>${g.moves} transformations tentées. Les annulations conservent ce décompte.</p><ol class="history-list">${[...g.history, g.s].map((s, i) => `<li><span>${i === 0 ? 'DÉPART' : `ÉTAPE ${i}`}</span><strong>${escape(equationText(s.eq))}</strong><p>${escape(s.label)}</p><small>${escape(s.why)}</small></li>`).join('')}</ol>`); }
+    return; show('Ton chemin algébrique', `<p>${g.moves} transformations tentées. Les annulations conservent ce décompte.</p><ol class="history-list">${[...g.history, g.s].map((s, i) => `<li><span>${i === 0 ? 'DÉPART' : `ÉTAPE ${i}`}</span><strong>${math(s.eq.left)} = ${math(s.eq.right)}</strong><p>${escape(s.label)}</p><small>${escape(s.why)}</small></li>`).join('')}</ol>`); }
 function check() { if (!g || busy)
     return; try {
     const state = validate(g);
@@ -297,7 +307,7 @@ function complete() {
     const beforeBadges = badges(save).filter(b => b.value >= b.target).map(b => b.name);
     if (mode === 'campaign') {
         const old = save.results[g.level.id];
-        const method = g.events.filter(e => e.kind === 'add' || e.kind === 'divide' || e.kind === 'multiply' || e.kind === 'factor' || e.kind === 'split' || e.kind === 'delta' || e.kind === 'drag').map(e => e.kind === 'add' ? `+${format(e.expression)}` : e.kind === 'divide' || e.kind === 'multiply' ? `${e.kind}${str(e.constant)}` : e.kind === 'drag' ? `drag-${e.part}-${e.id}` : e.kind).join('|');
+        const method = g.events.filter(e => e.kind === 'add' || e.kind === 'divide' || e.kind === 'multiply' || e.kind === 'factor' || e.kind === 'split' || e.kind === 'delta' || e.kind === 'complete-square' || e.kind === 'difference-squares' || e.kind === 'factor-common' || e.kind === 'write-square' || e.kind === 'drag').map(e => e.kind === 'add' ? `+${format(e.expression)}` : e.kind === 'divide' || e.kind === 'multiply' ? `${e.kind}${str(e.constant)}` : e.kind === 'drag' ? `drag-${e.part}-${e.id}` : e.kind==='factor-common'?`factor-common-${e.maximal?'maximal':'x'}`:e.kind).join('|');
         save.results[g.level.id] = { stars: Math.max(old?.stars ?? 0, sg), moves: Math.min(old?.moves ?? Infinity, g.moves), time: Math.min(old?.time ?? Infinity, time), methods: [...new Set([...(old?.methods ?? []), method])].slice(0, 3) };
     }
     s.wins++;
@@ -342,7 +352,7 @@ function complete() {
         save.arcadeBest = Math.max(save.arcadeBest, arcadeScore);
         store();
     }
-    shell(`<section class="result-screen" style="--world:${worlds[g.level.world].color}"><span class="result-seal">${answer.kind === 'all' ? '∞' : answer.kind === 'none' ? '∅' : '✓'}</span><p class="eyebrow">EXPÉRIENCE RÉUSSIE</p><h1>${answer.kind === 'all' ? 'Vraie pour tout réel.' : answer.kind === 'none' ? 'Impossible, et démontré.' : 'L’inconnue est libérée.'}</h1><div class="result-stars">${stars(sg)}</div><div class="result-solution">${escape(solutionText(answer))}</div><div class="result-continue">${button('next', mode === 'arcade' && arcade === 5 ? 'Nouvelle série →' : mode === 'practice' ? 'Nouvelle équation →' : 'Continuer →', 'primary')}</div><p>${sg === 3 ? 'Précision, autonomie et méthode. Un équilibre parfait.' : sg === 2 ? 'Une méthode solide. Rejoue sans aide pour viser trois étoiles.' : 'Tu as mené la résolution à son terme. Chaque manipulation prépare la suivante.'}</p><div class="result-metrics"><span><strong>${g.moves}</strong>transformations</span><span><strong>${g.errors}</strong>erreurs</span><span><strong>${g.hints}</strong>indices</span>${save.prefs.timer ? `<span><strong>${statTime(time)}</strong>temps</span>` : ''}</div>${newBadges.map(b => `<p class="badge-toast">✦ Succès débloqué : ${b.name}</p>`).join('')}${mode === 'arcade' ? `<p>Série : ${arcade} / 5 · Combo : ${combo}${arcade === 5 ? ` · ${arcadeScore} points` : ''}</p>` : ''}<div class="result-actions">${button('replay', '↶ Rejouer', 'secondary')}${button('result-history', '≡ Voir mes étapes', 'secondary')}</div><button data-screen="worlds" class="text-button">Retour aux mondes</button></section>`, 'worlds');
+    shell(`<section class="result-screen" style="--world:${worlds[g.level.world].color}"><span class="result-seal">${answer.kind === 'all' ? '∞' : answer.kind === 'none' ? '∅' : '✓'}</span><p class="eyebrow">EXPÉRIENCE RÉUSSIE</p><h1>${answer.kind === 'all' ? 'Vraie pour tout réel.' : answer.kind === 'none' ? 'Impossible, et démontré.' : 'L’inconnue est libérée.'}</h1><div class="result-stars">${stars(sg)}</div><div class="result-solution" role="math" aria-label="${escape(solutionText(answer))}">${solutionMath(answer)}</div><div class="result-continue">${button('next', mode === 'arcade' && arcade === 5 ? 'Nouvelle série →' : mode === 'practice' ? 'Nouvelle équation →' : 'Continuer →', 'primary')}</div><p>${sg === 3 ? 'Précision, autonomie et méthode. Un équilibre parfait.' : sg === 2 ? 'Une méthode solide. Rejoue sans aide pour viser trois étoiles.' : 'Tu as mené la résolution à son terme. Chaque manipulation prépare la suivante.'}</p><div class="result-metrics"><span><strong>${g.moves}</strong>transformations</span><span><strong>${g.errors}</strong>erreurs</span><span><strong>${g.hints}</strong>indices</span>${save.prefs.timer ? `<span><strong>${statTime(time)}</strong>temps</span>` : ''}</div>${newBadges.map(b => `<p class="badge-toast">✦ Succès débloqué : ${b.name}</p>`).join('')}${mode === 'arcade' ? `<p>Série : ${arcade} / 5 · Combo : ${combo}${arcade === 5 ? ` · ${arcadeScore} points` : ''}</p>` : ''}<div class="result-actions">${button('replay', '↶ Rejouer', 'secondary')}${button('result-history', '≡ Voir mes étapes', 'secondary')}</div><button data-screen="worlds" class="text-button">Retour aux mondes</button></section>`, 'worlds');
     window.scrollTo(0, 0);
     bind('next', () => { if (mode === 'campaign') {
         const idx = campaign.findIndex(l => l.id === g!.level.id);

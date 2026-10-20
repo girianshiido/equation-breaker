@@ -35,6 +35,20 @@ async function act(ev) { if (['add', 'divide', 'multiply'].includes(ev.kind)) {
     await operation(ev.kind, ev.value);
     await page.locator('#apply').click();
 }
+else if(ev.kind==='drag'){
+    await select(ev.id);
+    if(ev.part==='term')await page.locator('#opposite').click();
+    else if(ev.part==='algebraic-coefficient')await page.locator('#exact-coefficient').click();
+    else if(ev.part==='denominator')await page.locator('#denominator').click();
+    else await page.locator('#coefficient').click();
+    await page.locator('#apply').click();
+}
+else if(['complete-square','difference-squares','factor-common'].includes(ev.kind)){
+    for(const id of ev.ids)await select(id);
+    const button=ev.kind==='factor-common'?(ev.maximal&&await page.locator('#factor-common').count()?'factor-common':'factor-x'):ev.kind;
+    await page.locator(`#${button}`).click();await page.locator('#apply').click();
+}
+else if(ev.kind==='write-square'){await select(ev.id);await page.locator('#write-square').click();await page.locator('#apply').click();}
 else if (ev.kind === 'validate') {
     await page.locator('#validate').click();
 }
@@ -88,11 +102,48 @@ try {
         await geometry(plan.id);
         for (const ev of plan.events)
             await act(ev);
-        assert.equal(await page.locator('.result-solution').innerText(), plan.answer, plan.id);
+        assert.equal(await page.locator('.result-solution').getAttribute('aria-label'), plan.answer, plan.id);
         report.push({ level: plan.id, solved: true });
         if (['w3-2', 'w4-4', 'w5-1', 'w6-5'].includes(plan.id))
             await page.screenshot({ path: `test-results/result-${plan.id}.png`, fullPage: true });
     }
+    await nav('worlds');await page.locator('[data-world="5"]').click();
+    const exponents=await page.locator('.level-formula sup').evaluateAll(nodes=>nodes.map(sup=>{const box=sup.getBoundingClientRect();const range=document.createRange();range.selectNodeContents(sup.previousSibling);const base=range.getBoundingClientRect();return {top:box.top,bottom:box.bottom,base:base.bottom,size:parseFloat(getComputedStyle(sup).fontSize),font:parseFloat(getComputedStyle(sup.parentElement).fontSize)};}));
+    assert.ok(exponents.length>=10);assert.ok(exponents.every(s=>s.bottom<s.base&&s.size<s.font*.75));
+    assert.equal(await page.locator('.level-formula').first().evaluate(e=>getComputedStyle(e).display),'block');
+    report.push({test:'Level menu keeps x² superscripts above the baseline with normal inline spacing',passed:true});
+    // Deliberate identities: no automatic quadratic factor button and no discriminant.
+    await openLevel(plans.find(p=>p.id==='w6-2'));
+    assert.equal(await page.locator('#factor-left,#factor,#delta,#roots').count(),0);
+    await select('l.0');await select('l.1');await page.locator('#complete-square').click();
+    assert.match(await page.locator('#dialog-content').innerText(),/compens/);await page.locator('#apply').click();
+    await page.waitForFunction(()=>document.querySelector('.game')?.getAttribute('aria-busy')==='false');
+    assert.equal(await page.locator('.left-plate .block').count(),3);assert.equal(await page.locator('.right-plate .blocks').innerText(),'0');
+    await page.screenshot({path:'test-results/identity-compensation.png'});
+    await select('l.1');await select('l.2');await page.locator('#combine').click();await page.waitForFunction(()=>document.querySelector('.game')?.getAttribute('aria-busy')==='false');
+    await select('l.1');assert.equal(await page.locator('#difference-squares').count(),0);
+    await page.locator('#write-square').click();await page.locator('#apply').click();await page.waitForFunction(()=>document.querySelector('.game')?.getAttribute('aria-busy')==='false');
+    await select('l.0');await select('l.1');await page.locator('#difference-squares').click();await page.locator('#apply').click();await page.waitForFunction(()=>document.querySelector('.game')?.getAttribute('aria-busy')==='false');
+    assert.match(await page.locator('[data-node="l"]').getAttribute('aria-label'),/x − 2.*x − 3/);
+    report.push({test:'Explicit compensation, manual constant fusion, square preparation and chosen difference identity',passed:true});
+    await openLevel(plans.find(p=>p.id==='w6-10'));await select('l.0');await select('l.1');
+    assert.match(await page.locator('#factor-x').innerText(),/Mettre x/);assert.match(await page.locator('#factor-common').innerText(),/3x/);
+    await page.locator('#factor-common').click();await page.locator('#apply').click();await page.waitForFunction(()=>document.querySelector('.game')?.getAttribute('aria-busy')==='false');
+    assert.match(await page.locator('[data-node="l"]').getAttribute('aria-label'),/3x.*x − 4/);
+    report.push({test:'Common factor offers x and 3x as separate deliberate choices',passed:true});
+    // Actual touch long press on an irrational coefficient in a prepared product branch.
+    await page.setViewportSize({width:320,height:568});await openLevel(plans.find(p=>p.id==='w6-4'));
+    for(const ev of plans.find(p=>p.id==='w6-4').events){if(ev.kind==='drag'&&ev.part==='algebraic-coefficient')break;await act(ev);}
+    await page.locator('#arena').scrollIntoViewIfNeeded();
+    const touchSession=await context.newCDPSession(page),from=await page.locator('[data-grip="algebraic-coefficient"]').boundingBox(),to=await page.locator('.right-plate').boundingBox();
+    const start={x:from.x+from.width/2,y:from.y+from.height/2},end={x:to.x+to.width/2,y:to.y+to.height/2};
+    await touchSession.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[start]});await page.waitForTimeout(470);
+    assert.equal(await page.locator('.left-plate .blocks').innerText(),'x');assert.ok(await page.locator('.drag-token .radical').count());
+    for(let i=1;i<=8;i++)await touchSession.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:start.x+(end.x-start.x)*i/8,y:start.y+(end.y-start.y)*i/8}]});
+    await touchSession.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForFunction(()=>document.querySelector('.game')?.getAttribute('aria-busy')==='false');
+    assert.equal(await page.locator('.right-plate [data-node]').getAttribute('aria-label'),'−1/2, membre droit');
+    await page.reload();await page.locator('#resume').click();assert.equal(await page.locator('.right-plate [data-node]').getAttribute('aria-label'),'−1/2, membre droit');
+    report.push({test:'Real touch division by an exact radical coefficient at 320×568, followed by recovery',passed:true});
     // Responsive arena, including the longest expressions and large-text accessibility mode.
     for (const size of [{ width: 320, height: 568 }, { width: 360, height: 640 }, { width: 390, height: 844 }, { width: 430, height: 932 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }, { width: 844, height: 390 }]) {
         await page.setViewportSize(size);

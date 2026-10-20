@@ -1,3 +1,6 @@
+import { exactMono, exactMonoExpr, rational, scalarExpr, sNeg, sSign } from '../math/exact';
+import { rootExpression, type Solution } from '../math/solve';
+import { signedSquare } from '../math/squares';
 import { type Expr, terms, c, product } from '../math/ast';
 import { monomial, mono } from '../math/normalize';
 import { groupedFactor } from '../math/gestures';
@@ -5,6 +8,10 @@ import { neg, one, type Rational, str } from '../math/rational';
 import { escape, format } from '../math/format';
 const fraction = (q: Rational) => q.d === 1n ? escape(String(q.n)) : `<span class="fraction"><span>${escape(String(q.n))}</span><span>${escape(String(q.d))}</span></span>`;
 export function math(e: Expr, raw = false): string {
+    if(e.kind==='radical')return `<span class="radical" aria-label="racine carrée de ${escape(str(e.radicand))}"><span class="radical-symbol" aria-hidden="true"><span class="sr-only">√</span><svg viewBox="0 0 20 32" preserveAspectRatio="none"><path d="M1 19 L5 17 L10 29 L17 1 L20 1"/></svg></span><span class="radicand">${math(c(e.radicand))}</span></span>`;
+    if(e.kind==='square')return `<span class="written-square"><span class="paren">(</span>${math(e.base)}<span class="paren">)</span><sup>2</sup></span>`;
+    if(e.kind==='quotient')return `<span class="fraction"><span>${math(e.numerator)}</span><span>${math(e.denominator)}</span></span>`;
+
     const m = monomial(e);
     if (raw && e.kind === 'fraction') return `<span class="fraction"><span>${math(e.numerator)}</span><span>${math(c(e.denominator))}</span></span>`;
     if (raw && e.kind === 'product' && !m?.degree) return e.factors.map((f, i) => {
@@ -20,14 +27,17 @@ export function math(e: Expr, raw = false): string {
     }
     switch (e.kind) {
         case 'sum': return e.terms.map((t, i) => { const s = math(t, raw); return i ? (s.startsWith('−') ? ' − ' + s.slice(1) : ' + ' + s) : s; }).join('');
-        case 'product': return e.factors.map((f, i) => f.kind === 'sum' ? `<span class="paren">(</span>${math(f)}<span class="paren">)</span>` : f.kind === 'constant' && str(f.value) === '-1' ? '−' : `${i ? '·' : ''}${math(f)}`).join('');
+        case 'product': if(e.factors.length===2&&e.factors[0].kind==='constant'&&str(e.factors[0].value)==='-1')return '−'+(e.factors[1].kind==='sum'?`(${math(e.factors[1])})`:math(e.factors[1])); return e.factors.map((f, i) => f.kind === 'sum' ? `<span class="paren">(</span>${math(f)}<span class="paren">)</span>` : f.kind === 'constant' && str(f.value) === '-1' ? '−' : `${i && f.kind!=='variable' && !(f.kind==='power'&&f.base.kind==='variable') ? '·' : ''}${math(f)}`).join('');
         case 'power': return `(${math(e.base)})<sup>${e.exponent}</sup>`;
         case 'fraction': return `<span class="fraction"><span>${math(e.numerator)}</span><span>${fraction(e.denominator)}</span></span>`;
         default: return escape(format(e));
     }
 }
 function interactiveTerm(t: Expr, reveal: boolean): string {
+    if(signedSquare(t))return math(t);
     const m = monomial(t);
+    const exact=exactMono(t);
+    if(exact?.degree===1&&!rational(exact.q))return `<span class="factor-grip" data-grip="algebraic-coefficient">${math(scalarExpr(exact.q))}</span><i>x</i>`;
     const group = m ? null : groupedFactor(t);
     if ((!m || !m.degree) && !group) return math(t);
     const q = group?.q ?? m!.q, negative = q.n < 0n, abs = negative ? neg(q) : q;
@@ -42,11 +52,16 @@ export function blocks(e: Expr, side: 'l' | 'r', selected: string[], highlight: 
         const id = e.kind === 'sum' ? `${side}.${i}` : side, m = monomial(t);
         const type = m ? (m.degree ? 'variable' : 'constant') : t.kind === 'fraction' ? 'rational' : 'group';
         const group = m ? null : groupedFactor(t), q = m?.q ?? group?.q;
-        const negative = !!q && q.n < 0n;
-        const revealMinusOne = !raw && selected.includes(id) && negative && q!.n === -1n && !!(m?.degree || group);
+        const sq=signedSquare(t),em=exactMono(t);
+        const negative = sq?.sign===-1 || (!!em&&sSign(em.q)<0) || (!!q && q.n < 0n);
+        const revealMinusOne = !raw && selected.includes(id) && !sq && negative && q?.n === -1n && !!(m?.degree || group);
         const separateMinus = i > 0 && negative && !revealMinusOne;
-        const shown = separateMinus ? (m ? mono(neg(m.q), m.degree) : product(c(neg(group!.q)), group!.base)) : t;
+        const shown = separateMinus ? (sq?.sign===-1?t.kind==='product'?t.factors[1]:t : m ? mono(neg(m.q), m.degree) : em? exactMonoExpr(sNeg(em.q),em.degree): product(c(neg(group!.q)), group!.base)) : t;
         const operator = i ? `<span class="term-operator" aria-hidden="true">${separateMinus ? '−' : '+'}</span>` : '';
         return `<span class="term-unit ${i ? 'has-sign' : ''}">${operator}<button type="button" class="block ${type} ${selected.includes(id) ? 'selected' : ''} ${highlight.includes(id) ? 'hinted' : ''}" data-node="${id}" aria-pressed="${selected.includes(id)}" aria-label="${escape(format(t))}, membre ${side === 'l' ? 'gauche' : 'droit'}">${raw ? math(shown, true) : interactiveTerm(shown, selected.includes(id))}</button></span>`;
     }).join('');
+}
+
+export function solutionMath(s:Solution):string {
+    return s.kind==='all'?'S = ℝ':s.kind==='none'?'S = ∅':`S = { ${s.roots.map(root=>math(rootExpression(root))).join(' ; ')} }`;
 }

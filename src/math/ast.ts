@@ -1,5 +1,5 @@
 import { rat, type Rational, readRational, mul } from './rational';
-export type Expr = {
+export type Expr = { kind: 'radical'; radicand: Rational } | { kind: 'square'; base: Expr } | { kind: 'quotient'; numerator: Expr; denominator: Expr } | {
     kind: 'constant';
     value: Rational;
 } | {
@@ -30,7 +30,7 @@ export const product = (...factors: Expr[]): Expr => { if (factors.some(e => e.k
     return c(0); if (factors.every(e => e.kind === 'constant'))
     return c(factors.reduce((v, e) => mul(v, e.kind === 'constant' ? e.value : rat(1)), rat(1))); return factors.length === 1 ? factors[0] : { kind: 'product', factors }; };
 export const terms = (e: Expr): Expr[] => e.kind === 'sum' ? e.terms : [e];
-export function children(e: Expr): Expr[] { return e.kind === 'sum' ? e.terms : e.kind === 'product' ? e.factors : e.kind === 'power' ? [e.base] : e.kind === 'fraction' ? [e.numerator] : []; }
+export function children(e: Expr): Expr[] { return e.kind === 'sum' ? e.terms : e.kind === 'product' ? e.factors : e.kind === 'power' || e.kind === 'square' ? [e.base] : e.kind === 'quotient' ? [e.numerator, e.denominator] : e.kind === 'fraction' ? [e.numerator] : []; }
 export function nodeAt(eq: Equation, id: string): Expr { const [side, ...indices] = id.split('.'); if (side !== 'l' && side !== 'r')
     throw Error('Sélection invalide.'); let e = side === 'l' ? eq.left : eq.right; for (const i of indices) {
     e = children(e)[Number(i)];
@@ -42,7 +42,9 @@ export function replace(eq: Equation, id: string, value: Expr): Equation { const
     return value; const i = Number(path[0]), cc = children(e).map((ch, j) => j === i ? rec(ch, path.slice(1)) : ch); switch (e.kind) {
     case 'sum': return sum(...cc);
     case 'product': return product(...cc);
-    case 'power': return { ...e, base: cc[0] };
+    case 'power':
+    case 'square': return { ...e, base: cc[0] };
+    case 'quotient': return { ...e, numerator: cc[0], denominator: cc[1] };
     case 'fraction': return { ...e, numerator: cc[0] };
     default: throw Error('Sélection invalide.');
 } }; return side === 'l' ? { ...eq, left: rec(eq.left, rest) } : { ...eq, right: rec(eq.right, rest) }; }

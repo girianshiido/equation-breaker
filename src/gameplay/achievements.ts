@@ -11,6 +11,6 @@ export const badges = (s: Save) => [
     ['∞', 'À l’infini', s.stats.all, 5, 'Identités reconnues'],
     ['⋈', 'Produit fatal', s.stats.products, 25, 'Équations produits nuls résolues'],
     ['½', 'Maître des fractions', s.stats.fractions, 30, 'Équations du monde 4 sans indice'],
-    ['Δ', 'Roi du discriminant', s.stats.quadratics, 30, 'Trinômes résolus avec discriminant'],
+    ['²', 'Bâtisseur de carrés', s.stats.quadratics, 30, 'Équations du second degré résolues'],
     ['✦', 'Équilibriste suprême', campaign.filter(l => s.results[l.id]?.stars === 3).length, campaign.length, 'Trois étoiles sur toute la campagne']
 ].map(([symbol, name, value, target, description]) => ({ symbol: String(symbol), name: String(name), value: Number(value), target: Number(target), description: String(description) }));
