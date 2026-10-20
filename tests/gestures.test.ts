@@ -9,6 +9,7 @@ import { generated } from '../src/levels/generator';
 import { campaign } from '../src/levels/campaign';
 import { start, perform, undo } from '../src/gameplay/game';
 import { restore, snapshot } from '../src/app/persistence';
+import { blocks } from '../src/ui/math';
 
 describe('Manipulations progressives', () => {
     it('retire le terme choisi et inverse son signe sans toucher au modèle de départ', () => {
@@ -18,6 +19,15 @@ describe('Manipulations progressives', () => {
         expect(equationText(p.result)).toBe('3x = −8');
         expect(equationText(eq)).toBe(before);
         expect(transform(eq, p.action).equation).toEqual(p.result);
+    });
+    it('garde 3x + 2x sous forme compacte avant de fusionner en 5x', () => {
+        const p = gesturePlan(equation('-2x+5=3x'), 'l.0', 'term');
+        expect(equationText(p.landing)).toBe('5 = 3x + 2x');
+        const html = blocks(p.landing.right, 'r', [], [], true);
+        expect(html).toContain('3<i>x</i>');
+        expect(html).toContain('2<i>x</i>');
+        expect(html).not.toContain(' × ');
+        expect(equationText(p.result)).toBe('5 = 5x');
     });
     it('divise tout le membre de départ pendant le trajet, puis tout le membre d’arrivée au dépôt', () => {
         const eq = equation('3x+5=-3'), p = gesturePlan(eq, 'l.0', 'coefficient');

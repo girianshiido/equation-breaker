@@ -60,6 +60,8 @@ try {
     await open('w1-5'); await page.locator('[data-node="l.0"]').click(); await page.locator('[data-pick="coefficient"]').click(); assert.ok(await page.locator('.grip-picked').count()); assert.equal(await text('#moves'), '0');
     await page.locator('#coefficient').click(); await page.locator('#apply').click(); await done(); assert.equal(await text('.left-plate .fraction'), '3 2');
     check('No-drag alternative selects and applies the same factor');
+    await open('w2-1');await begin('[data-node="l.0"]');await cross();await page.mouse.up();assert.doesNotMatch(await text('.right-plate .blocks'),/×/);assert.match((await text('.right-plate .blocks')).replaceAll(' ',''),/−3x/);await page.screenshot({path:'test-results/gesture-compact-like-terms.png'});await done();
+    check('Variable terms remain compact throughout deposit and reduction');
     await open('w3-1'); await page.locator('[data-node="l"]').click(); assert.ok(await page.locator('#expand').count()); assert.ok(await page.locator('[data-pick="coefficient"]').count());
     await begin('[data-node="l"] [data-grip="coefficient"]', true); assert.equal(await text('.drag-token'), '2'); assert.equal((await text('.left-plate .blocks')).replaceAll(' ', ''), 'x+3'); assert.equal(await text('.right-plate .blocks'), '14');
     await page.screenshot({path:'test-results/gesture-group-transit.png'});await cross(); await page.mouse.up(); assert.equal(await text('.right-plate .fraction'), '14 2'); await done(); assert.equal(await text('.right-plate .blocks'), '7');

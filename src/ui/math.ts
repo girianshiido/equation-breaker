@@ -5,9 +5,9 @@ import { neg, one, type Rational, str } from '../math/rational';
 import { escape, format, operandText } from '../math/format';
 const fraction = (q: Rational) => q.d === 1n ? escape(String(q.n)) : `<span class="fraction"><span>${escape(String(q.n))}</span><span>${escape(String(q.d))}</span></span>`;
 export function math(e: Expr, raw = false): string {
-    if (raw && e.kind === 'fraction') return `<span class="fraction"><span>${math(e.numerator)}</span><span>${escape(operandText(e.denominator))}</span></span>`;
-    if (raw && e.kind === 'product') return e.factors.map(f => `(${math(f)})`).join(' × ');
     const m = monomial(e);
+    if (raw && e.kind === 'fraction') return `<span class="fraction"><span>${math(e.numerator)}</span><span>${escape(operandText(e.denominator))}</span></span>`;
+    if (raw && e.kind === 'product' && !m?.degree) return e.factors.map(f => `(${math(f)})`).join(' × ');
     if (m) {
         const sign = m.q.n < 0n ? '−' : '', abs = m.q.n < 0n ? neg(m.q) : m.q;
         if (!m.degree) return sign + fraction(abs);
