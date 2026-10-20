@@ -74,7 +74,7 @@ export function perform(g: Game, event: Event): void {
         s.eq = s.branches[event.index];
         s.delta = false;
         s.answer = null;
-        s.label = `Explorer la branche ${event.index + 1}`;
+        s.label = `Explorer la porte ${event.index + 1}`;
         s.why = 'Les solutions des branches seront réunies, jamais intersectées.';
     }
     else if (event.kind === 'confirm-branch') {
@@ -143,15 +143,23 @@ export function perform(g: Game, event: Event): void {
     if (event.kind === 'combine')
         g.combined++;
 }
-export function validate(g: Game): 'branch' | 'win' { const s = g.s; if (s.branches.length && !s.answer) {
-    if (!terminal(s.eq))
-        throw Error('Isole x dans cette branche avant de la valider.');
-    if (!s.completed[s.branch])
-        perform(g, { kind: 'confirm-branch' });
-    return 'branch';
-} if (!s.answer && !terminal(s.eq))
-    throw Error('L’équation est équivalente, mais pas encore résolue. Isole x ou construis l’ensemble des racines.'); const answer = s.answer ?? solve(s.eq); if (solutionKey(answer) !== solutionKey(solve(g.level.initial)))
-    throw Error('Il manque une solution. Vérifie toutes les branches.'); s.answer = answer; g.won = true; return 'win'; }
+export function validate(g: Game): 'branch' | 'win' {
+    if (g.s.branches.length && !g.s.answer) {
+        if (!terminal(g.s.eq)) throw Error('Isole x dans cette branche avant de la valider.');
+        if (!g.s.completed[g.s.branch]) perform(g, { kind: 'confirm-branch' });
+        const next = g.s.completed.findIndex(solution => !solution);
+        if (next >= 0) {
+            perform(g, { kind: 'branch', index: next });
+            return 'branch';
+        }
+        perform(g, { kind: 'collect' });
+    }
+    const s = g.s;
+    if (!s.answer && !terminal(s.eq)) throw Error('L’équation est équivalente, mais pas encore résolue. Isole x ou construis l’ensemble des racines.');
+    const answer = s.answer ?? solve(s.eq);
+    if (solutionKey(answer) !== solutionKey(solve(g.level.initial))) throw Error('Il manque une solution. Vérifie toutes les branches.');
+    s.answer = answer; g.won = true; return 'win';
+}
 export function undo(g: Game): boolean { if (g.won || !g.history.length)
     return false; g.s = g.history.pop()!; g.events.pop(); g.hintStage = 0; return true; }
 export function score(g: Pick<Game, 'errors' | 'hints' | 'moves' | 'level'>): number { return g.errors === 0 && g.hints === 0 && g.moves <= g.level.budget ? 3 : g.errors <= 1 && g.hints <= 1 ? 2 : 1; }

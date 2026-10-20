@@ -28,8 +28,8 @@ it('résout entièrement le trinôme par carré complété et racines, et restau
     perform(g, { kind: 'square-roots' });
     expect(g.s.branches).toHaveLength(2);
     perform(g, { kind: 'drag', id: 'l.1', part: 'term' }); validate(g);
-    perform(g, { kind: 'branch', index: 1 }); perform(g, { kind: 'drag', id: 'l.1', part: 'term' }); validate(g);
-    perform(g, { kind: 'collect' });
+    expect(g.s.branch).toBe(1);
+    perform(g, { kind: 'drag', id: 'l.1', part: 'term' }); expect(validate(g)).toBe('win');
     expect(solutionText(g.s.answer!)).toBe('S = { 2 ; 3 }');
     expect(restore(snapshot(g, 'campaign', 0, 0))?.game.s).toEqual(g.s);
     expect(validate(g)).toBe('win');
@@ -37,6 +37,6 @@ it('résout entièrement le trinôme par carré complété et racines, et restau
 for (const [source, answer] of [['(x+1)^2=2', 'S = { −1−√2 ; −1+√2 }'], ['(x+1)^2=0', 'S = { −1 }'], ['(x+1)^2=-2', 'S = ∅']]) it(`extrait exactement les racines de ${source}`, () => {
     const level = { ...campaign.find(l => l.id === 'w6-2')!, initial: equation(source) }, g = start(level);
     perform(g, { kind: 'square-roots' });
-    if (g.s.branches.length) { perform(g, { kind: 'drag', id: 'l.1', part: 'term' }); validate(g); perform(g, { kind: 'collect' }); }
+    if (g.s.branches.length) { perform(g, { kind: 'drag', id: 'l.1', part: 'term' }); validate(g); }
     expect(solutionText(g.s.answer!)).toBe(answer); expect(validate(g)).toBe('win');
 });

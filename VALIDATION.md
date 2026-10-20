@@ -131,3 +131,12 @@ La taille est mesurée à l’affichage, au redimensionnement et lors des étape
 Essai dédié à 320×568 sur `3(x−2)+5=2x+7` : taille commune réduite, puis agrandissement après saisie du coefficient 3 et après passage en paysage. Contrôle des étapes provisoires et du dépôt avec la géométrie recalculée avant de déterminer la cible.
 
 Contrôle visuel de cette présentation dans le navigateur intégré à une largeur de 320 px ; un passage regroupé Chrome a validé 28 scénarios de gestes, dont la taille commune et son agrandissement. Aucun appareil physique n’est revendiqué pour ces essais.
+
+## Coefficient fractionnaire complet et portes automatiques — 20 octobre 2026
+
+- Appui prolongé sur `x` dans `3x/4` : saisie de `3/4` en un jeton. Le membre source est entièrement divisé pendant le trajet ; l’autre reste inchangé jusqu’au dépôt. Les prises séparées du numérateur et du dénominateur restent disponibles, ainsi que le bouton et le clavier pour le coefficient complet.
+- Cas exact `3x/4=5` : `x=20/3`. Tests des coefficients négatifs, des groupes, des autres termes du membre, du sens droite-gauche et du maintien du comportement des anciennes sauvegardes de saisie du numérateur.
+- Validation d’une porte : passage à la prochaine porte inachevée ; dernière validation : union sans doublon et fin de l’équation. Même comportement pour les branches issues d’un carré. Tests d’une résolution commencée par la seconde porte, des racines doubles, d’une porte unique, du refus de validation prématurée et de la reprise après rechargement.
+- TypeScript strict et 133 tests automatiques réussis, dont les 72 niveaux résolus avec la progression automatique.
+- 32 scénarios navigateur de gestes réussis : produit nul et carré complété sans navigation manuelle entre portes ni clic supplémentaire pour réunir ; coefficient rationnel complet, annulation, clavier, reprise et vraie séquence d’entrée tactile émulée à 320×568. Régression des gestes existants et mouvements sous CPU ×6. Aucune erreur JavaScript.
+- Contrôle visuel supplémentaire dans le navigateur intégré, à 320 px : appui long sur x reconnaissant le coefficient complet et bouton Valider visible. Les essais tactiles restent des simulations sur navigateur de bureau ; aucun téléphone physique n’a été utilisé.

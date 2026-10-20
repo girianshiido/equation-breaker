@@ -3,7 +3,7 @@ import { mono, monomial, tidy } from './normalize';
 import { add, div, mul, neg, one, rat, zero, type Rational } from './rational';
 import { format, operandText } from './format';
 
-export type Grip = 'term' | 'coefficient' | 'denominator';
+export type Grip = 'term' | 'coefficient' | 'denominator' | 'rational-coefficient';
 export type DragAction = { kind: 'drag'; id: string; part: Grip };
 export type Side = 'l' | 'r';
 export interface GesturePlan {
@@ -62,7 +62,7 @@ export function gripValue(e: Expr, grip: Exclude<Grip, 'term'>): Rational {
     const m = monomial(e), group = groupedFactor(e);
     const q = m?.degree ? m.q : group?.q;
     if (!q || zero(q)) throw Error('Sélectionne un terme en x ou un facteur constant devant un groupe.');
-    const value = grip === 'denominator' ? rat(q.d) : rat(q.n);
+    const value = grip === 'rational-coefficient' ? q : grip === 'denominator' ? rat(q.d) : rat(q.n);
     if (one(value)) throw Error('Ce facteur vaut 1 et ne transforme pas l’équation.');
     return value;
 }
@@ -86,7 +86,7 @@ export function gesturePlan(eq: Equation, id: string, part: Grip): GesturePlan {
         why = 'Le changement de signe représente l’ajout de l’opposé aux deux membres. Le terme d’origine s’annule ; le terme déposé se réduit avec ses semblables.';
     } else {
         const value = gripValue(term, part);
-        const dividing = part === 'coefficient';
+        const dividing = part !== 'denominator';
         const scale = dividing ? div(rat(1), value) : value;
         inFlightSource = scaleMember(origin, scale);
         rawTarget = dividing ? { kind: 'fraction', numerator: target, denominator: value } : { kind: 'product', factors: [c(value), target] };
@@ -96,6 +96,6 @@ export function gesturePlan(eq: Equation, id: string, part: Grip): GesturePlan {
         why = `${dividing ? 'Chaque terme des deux membres est divisé' : 'Chaque terme des deux membres est multiplié'} par ${operandText(value)}, une constante non nulle. Pendant le trajet, le signe égal est suspendu : seule la transformation complète est validée.`;
     }
     const landing = withSides(source, inFlightSource, rawTarget);
-    const resultTarget = part === 'term' ? reduceTop(rawTarget) : scaleMember(target, part === 'coefficient' ? div(rat(1), gripValue(term, part)) : gripValue(term, part));
+    const resultTarget = part === 'term' ? reduceTop(rawTarget) : scaleMember(target, part !== 'denominator' ? div(rat(1), gripValue(term, part)) : gripValue(term, part));
     return { action: { kind: 'drag', id, part }, source, destination, inFlightSource, landing, result: withSides(source, inFlightSource, resultTarget), carried, arrived, mirror, label, why };
 }

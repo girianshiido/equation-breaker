@@ -118,7 +118,7 @@ function eventJSON(e: Event): unknown { if (e.kind === 'add')
     return { kind: e.kind, expression: format(e.expression).replaceAll('−', '-') }; if (e.kind === 'divide' || e.kind === 'multiply')
     return { kind: e.kind, constant: str(e.constant) }; return e; }
 function eventRead(v: unknown): Event { if (!object(v))
-    throw Error('Étape invalide'); const kind = v.kind; if (kind === 'drag' && typeof v.id === 'string' && /^[lr](\.\d+)?$/.test(v.id) && ['term', 'coefficient', 'denominator'].includes(String(v.part))) return { kind, id:v.id, part:v.part as 'term'|'coefficient'|'denominator' }; if (kind === 'add' && typeof v.expression === 'string')
+    throw Error('Étape invalide'); const kind = v.kind; if (kind === 'drag' && typeof v.id === 'string' && /^[lr](\.\d+)?$/.test(v.id) && ['term', 'coefficient', 'denominator', 'rational-coefficient'].includes(String(v.part))) return { kind, id:v.id, part:v.part as 'term'|'coefficient'|'denominator'|'rational-coefficient' }; if (kind === 'add' && typeof v.expression === 'string')
     return { kind, expression: parse(v.expression) }; if ((kind === 'divide' || kind === 'multiply') && typeof v.constant === 'string')
     return { kind, constant: readRational(v.constant) }; if ((kind === 'expand' || kind === 'factor' || kind === 'simplify') && typeof v.id === 'string' && /^[lr](\.\d+)*$/.test(v.id))
     return { kind, id: v.id }; if ((kind === 'combine' || kind === 'complete-square') && Array.isArray(v.ids) && v.ids.length === 2 && v.ids.every(id => typeof id === 'string' && /^[lr](\.\d+)*$/.test(id)))

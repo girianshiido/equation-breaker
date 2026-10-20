@@ -119,7 +119,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         const gripElement = (event.target as HTMLElement).closest<HTMLElement>('[data-grip]');
         const part = options.picked?.id === node ? options.picked.part : gripElement?.classList.contains('revealed-grip') ? 'coefficient' : 'term';
         pointer = { id: event.pointerId, node, part, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, moved: false };
-        const longPart = (gripElement?.dataset.grip as Exclude<Grip, 'term'> | undefined) ?? ((group?.q ?? m!.q).d > 1n ? 'denominator' : 'coefficient');
+        const longPart = (gripElement?.dataset.grip as Exclude<Grip, 'term'> | undefined) ?? ((group?.q ?? m!.q).d > 1n ? 'rational-coefficient' : 'coefficient');
         if (m?.degree === 2) { hold = window.setTimeout(beginRange, 420); return; }
         if (m?.degree || group) hold = window.setTimeout(() => {
             if (!pointer) return;

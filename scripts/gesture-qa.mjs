@@ -54,6 +54,19 @@ try {
     await open('w1-8'); await begin('[data-node="l.0"] [data-grip="denominator"]', true); assert.match(await text('.left-plate .blocks'), /x.*8/); assert.equal(await text('.right-plate .blocks'), '5');
     await cross(); await page.mouse.up(); assert.equal(await text('.right-plate .blocks'), '4 × 5'); await done(); assert.equal(await text('.right-plate .blocks'), '20');
     check('Denominator drag multiplies every term and exposes the intermediate product');
+    await open('w4-4'); await begin('[data-node="l.0"] i', true);
+    assert.equal(await text('.drag-token'), '3 4'); assert.equal((await text('.left-plate .blocks')).replaceAll(' ', ''), 'x+23'); assert.equal(await text('.right-plate .blocks'), '2');
+    await page.screenshot({path:'test-results/rational-coefficient-transit.png'});
+    await cross(); await page.mouse.up(); assert.equal(await text('.right-plate .blocks'), '2 3 4'); await done();
+    assert.equal(await text('.right-plate .blocks'), '8 3'); assert.equal(await text('#moves'), '1');
+    await page.reload(); await page.locator('#resume').click(); assert.equal(await text('.right-plate .blocks'), '8 3');
+    await page.locator('#undo').click(); await begin('[data-node="l.0"] i', true); await page.keyboard.press('Escape'); await page.mouse.up(); assert.equal(await text('.right-plate .blocks'), '2');
+    await page.locator('[data-node="l.0"]').click(); await page.locator('[data-pick="rational-coefficient"]').focus(); await page.keyboard.press('Enter');
+    assert.match(await text('#coefficient'), /3\/4/); await page.locator('#coefficient').click(); await page.locator('#apply').click(); await done(); assert.equal(await text('.right-plate .blocks'), '8 3');
+    check('Full rational coefficient: unilateral preview, drop, recovery, undo, cancellation and keyboard');
+    await open('w4-4'); await begin('[data-node="l.0"] [data-grip="coefficient"]', true); assert.equal(await text('.drag-token'), '3'); await page.keyboard.press('Escape'); await page.mouse.up();
+    await begin('[data-node="l.0"] [data-grip="denominator"]', true); assert.equal(await text('.drag-token'), '4'); await page.keyboard.press('Escape'); await page.mouse.up(); assert.equal(await text('#moves'), '0');
+    check('Numerator and denominator remain independently detachable');
     await open('w1-4'); await begin('[data-node="l"]', true); await cross(); await page.mouse.up(); assert.equal(await text('.right-plate .fraction'), '10 −2'); await done(); assert.equal(await text('.right-plate .blocks'), '−5');
     check('Negative divisor stays bare under the fraction bar, with parenthesized textual division');
     await open('w1-11'); await page.locator('[data-node="l.0"]').click(); assert.equal(await text('.revealed-grip'), '(−1)');
@@ -101,13 +114,20 @@ try {
     assert.equal(await text('.right-plate .fraction'), '1 4');
     await page.locator('#square-roots').click(); await done(); assert.equal(await page.locator('[data-branch]').count(), 2);
     for (const index of [0, 1]) {
-        if (index) { await page.locator(`[data-branch="${index}"]`).click(); await done(); }
+        assert.ok(await page.locator(`[data-branch="${index}"].active`).count());
         await begin('[data-node="l.1"]'); await cross(); await page.mouse.up(); await done(); await page.locator('#validate').click();
     }
-    await page.locator('#collect').click(); await done(); await page.locator('#validate').click();
     assert.equal(await text('.result-solution'), 'S = { 2 ; 3 }');
     await page.screenshot({ path: 'test-results/completed-square-branches.png', fullPage: true });
     check('Hold-and-sweep selection, exact 25/4 completion and two solved square-root branches');
+    await open('w5-1'); await page.locator('#split').click(); await done();
+    await begin('[data-node="l.1"]'); await cross(); await page.mouse.up(); await done(); await page.locator('#validate').click();
+    assert.ok(await page.locator('[data-branch="1"].active').count()); assert.match(await text('[data-branch="0"]'), /✓/); assert.equal(await page.locator('.block.selected').count(),0);
+    await page.reload(); await page.locator('#resume').click(); assert.ok(await page.locator('[data-branch="1"].active').count());
+    await page.screenshot({path:'test-results/product-auto-second-door.png'});
+    await begin('[data-node="l.1"]'); await cross(); await page.mouse.up(); await done(); await page.locator('#validate').click();
+    assert.equal(await text('.result-solution'), 'S = { −3 ; 2 }');
+    check('Zero product validates door one, automatically opens door two, persists and reunites solutions on final validation');
     // Actual touch events in Chrome, in both portrait and landscape arenas.
     const cdp = await context.newCDPSession(page);
     for (const size of [{ width: 320, height: 568 }, { width: 844, height: 390 }]) {
@@ -126,6 +146,14 @@ try {
         await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await done();assert.equal(await text('.right-plate .blocks'),id==='w3-1'?'7':'15');
         check(`Real touch long press grouped factor ${id}`);
     }
+    await page.setViewportSize({width:320,height:568}); await open('w4-5'); await page.locator('#arena').scrollIntoViewIfNeeded();
+    const rationalFrom = await center('[data-node="l"] i'), rationalTo = await center('.right-plate');
+    await cdp.send('Input.dispatchTouchEvent', {type:'touchStart',touchPoints:[rationalFrom]}); await page.waitForTimeout(470);
+    assert.equal((await text('.drag-token')).replaceAll(' ', ''), '−23'); assert.equal(await text('.left-plate .blocks'), 'x'); assert.equal(await text('.right-plate .blocks'), '4');
+    for(let i=1;i<=8;i++) await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:rationalFrom.x+(rationalTo.x-rationalFrom.x)*i/8,y:rationalFrom.y+(rationalTo.y-rationalFrom.y)*i/8}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]}); await done(); assert.equal(await text('.right-plate .blocks'),'−6'); assert.equal(await text('#moves'),'1');
+    await page.screenshot({path:'test-results/rational-coefficient-mobile.png'});
+    check('Real touch long press takes a signed rational coefficient at 320×568');
     await page.setViewportSize({ width: 390, height: 844 }); await open('w1-5');
     await begin('[data-node="l.0"]', true); await page.keyboard.press('Escape'); await page.mouse.up(); assert.match(await text('.left-plate .blocks'), /2\s*x.*3/); assert.equal(await text('#moves'), '0');
     await begin('[data-node="l.1"]'); await page.setViewportSize({ width: 430, height: 932 }); await page.mouse.up(); assert.equal(await text('#moves'), '0'); assert.match(await text('.left-plate .blocks'), /2\s*x.*3/);

@@ -37,6 +37,7 @@ Le bouton haut-parleur, en haut, active ou coupe les sons ; ce choix est conserv
 - **Glisser un terme entier vers l’autre membre** : il quitte son membre d’origine et change de signe en traversant le signe égal. Le dépôt affiche d’abord le calcul non réduit, puis fusionne les termes semblables après 380 ms (180 ms en mode sans animations). Par exemple, `3x + 5 = −3` donne visuellement `3x = −3 − 5`, puis `3x = −8`.
 - **Appui prolongé sur un coefficient** : le facteur suit le doigt. Tout le membre de départ est déjà divisé, tandis que le membre d’arrivée reste inchangé jusqu’au dépôt. Pour `3x + 5 = −3`, on voit donc `x + 5/3` à gauche, puis `−3/3` à droite au dépôt, et enfin `−1`.
 - **Facteur devant une parenthèse** : maintenir le `3` de `3(x + 3) = 6` permet de le saisir sans développer. Le membre gauche devient `x + 3` pendant le trajet ; le dépôt donne `6/3`, puis `2`, à droite. Les autres termes éventuels du membre sont eux aussi divisés.
+- **Appui prolongé sur le x d’un terme fractionnaire** : saisit le coefficient rationnel complet. Pour `3x/4 = 5`, le jeton `3/4` part d’un bloc : `x` apparaît à gauche pendant le trajet, puis `5 ÷ (3/4)` se réduit à `20/3` au dépôt. Un appui sur le `3` ou le `4` conserve leur saisie séparée. Le bouton « Saisir le coefficient complet » donne la même possibilité au clavier. Les coefficients négatifs conservent leur signe.
 - **Appui prolongé sur un dénominateur** : même principe, avec multiplication de tous les termes. `x/4 + 5 = −3` devient `x + 20 = −12`. On peut aussi saisir le `2` de `(x + 4)/2` : tout le numérateur devient `x + 4`, puis l’autre membre est multiplié par `2` au dépôt. Développer le groupe fractionné reste une autre possibilité.
 - Sélectionner **−x** révèle **(−1) × x**, dont le facteur peut être saisi. La touche **× (−1)** applique directement une multiplication aux deux membres.
 - Pendant une transformation incomplète, **le signe égal est suspendu**. Ce dessin transitoire n’est pas enregistré comme une égalité : seul le dépôt valide produit une transformation mathématique et compte un coup.
@@ -47,6 +48,8 @@ Un toucher court sélectionne un terme ; deux touchers sélectionnent des termes
 ### Choisir une méthode
 
 Les parenthèses se développent, les trinômes se factorisent et les produits nuls ouvrent des branches. Le déplacement n’est pas imposé comme méthode universelle.
+
+La validation d’une porte ouvre automatiquement la prochaine porte inachevée. La validation de la dernière réunit les solutions sans doublon et termine l’équation. Ce parcours s’applique aussi aux branches obtenues par extraction des racines d’un carré, y compris lorsqu’une seule racine existe.
 
 Dans le monde 6, maintenir le doigt sur **x²**, puis le faire glisser sur le terme en **x**, surligne le groupe. On peut aussi sélectionner les deux termes par touchers courts ou au clavier. **Compléter le carré** indique la quantité exacte ajoutée aux deux membres et montre un aperçu : pour `x² − 5x`, il faut ajouter **25/4**, et non 5/4. Les autres termes de la somme restent présents. Un coefficient de x² différent de 1 doit d’abord être ramené à 1 par division des deux membres.
 

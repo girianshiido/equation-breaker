@@ -59,6 +59,44 @@ describe('Manipulations progressives', () => {
         expect(same(normalize(eq.right), normalize(p.landing.right))).toBe(false);
         expect(solutionKey(solve(eq))).toBe(solutionKey(solve(transform(eq, p.action).equation)));
     });
+    it('détache la fraction entière en un seul geste et garde les prises séparées', () => {
+        const eq = equation('3x/4=5'), p = gesturePlan(eq, 'l', 'rational-coefficient');
+        expect(format(p.carried)).toBe('3/4');
+        expect(format(p.inFlightSource)).toBe('x');
+        expect(p.landing.right).toEqual({ kind: 'fraction', numerator: eq.right, denominator: { n: 3n, d: 4n } });
+        expect(equationText(p.result)).toBe('x = 20/3');
+        expect(transform(eq, p.action).equation).toEqual(p.result);
+        expect(equationText(eq)).toBe('3/4x = 5');
+        expect(format(gesturePlan(eq, 'l', 'coefficient').carried)).toBe('3');
+        expect(format(gesturePlan(eq, 'l', 'denominator').carried)).toBe('4');
+        expect(blocks(eq.left, 'l', [], [])).toContain('data-grip="rational-coefficient"');
+    });
+    it('divise tous les termes par le coefficient rationnel signé, dans les deux sens', () => {
+        for (const [source, id, expected] of [
+            ['3x/4+2=5', 'l.0', 'x + 8/3 = 20/3'],
+            ['-3x/4+2=5', 'l.0', 'x − 8/3 = −20/3'],
+            ['5=-3x/4+2', 'r.0', '−20/3 = x − 8/3'],
+            ['x/4=5', 'l', 'x = 20'],
+            ['3(x+2)/4+2=5', 'l.0', 'x + 2 + 8/3 = 20/3'],
+        ]) {
+            const eq = equation(source), p = gesturePlan(eq, id, 'rational-coefficient');
+            expect(equationText(p.result)).toBe(expected);
+            expect(solutionKey(solve(p.result))).toBe(solutionKey(solve(eq)));
+        }
+    });
+    it('restaure et annule la saisie complète sans changer les anciennes saisies', () => {
+        const level = campaign.find(l => l.id === 'w4-4')!;
+        const game = start(level);
+        perform(game, { kind: 'drag', id: 'l.0', part: 'rational-coefficient' });
+        const restored = restore(snapshot(game, 'campaign', 0, 0))!.game;
+        expect(equationText(restored.s.eq)).toBe('x + 2/3 = 8/3');
+        expect(restored.moves).toBe(1);
+        expect(undo(restored)).toBe(true);
+        expect(restored.s.eq).toEqual(level.initial);
+        const legacy = start(level);
+        perform(legacy, { kind: 'drag', id: 'l.0', part: 'coefficient' });
+        expect(equationText(restore(snapshot(legacy, 'campaign', 0, 0))!.game.s.eq)).toBe('1/4x + 1/6 = 2/3');
+    });
     it('saisit le dénominateur et multiplie chaque terme', () => {
         const eq = equation('x/4+5=-3'), p = gesturePlan(eq, 'l.0', 'denominator');
         expect(format(p.inFlightSource)).toBe('x + 20');
@@ -119,7 +157,7 @@ describe('Manipulations progressives', () => {
             const eq = generated(world, seed).initial;
             for (const [side, expr] of [['l', eq.left], ['r', eq.right]] as const) {
                 const ids = expr.kind === 'sum' ? expr.terms.map((_, i) => `${side}.${i}`) : [side];
-                for (const id of ids) for (const part of ['coefficient', 'denominator'] as const) {
+                for (const id of ids) for (const part of ['coefficient', 'denominator', 'rational-coefficient'] as const) {
                     try { gripValue(nodeAt(eq, id), part); } catch { continue; }
                     const result = transform(eq, gesturePlan(eq, id, part).action).equation;
                     expect(solutionKey(solve(result))).toBe(solutionKey(solve(eq)));

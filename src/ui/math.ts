@@ -35,7 +35,7 @@ function interactiveTerm(t: Expr, reveal: boolean): string {
     const variable = group ? (needsParens ? `<span class="paren">(</span>${math(group.base)}<span class="paren">)</span>` : math(group.base)) : `<i>x</i>${m!.degree === 2 ? '<sup>2</sup>' : ''}`;
     const coefficient = negative && abs.n === 1n && reveal ? '<span class="factor-grip revealed-grip" data-grip="coefficient">(−1)</span><span class="factor-times">×</span>' : `<span class="factor-grip" data-grip="coefficient">${negative ? '−' : ''}${abs.n === 1n ? '' : abs.n}</span>`;
     const numerator = coefficient + variable;
-    return abs.d === 1n ? numerator : `<span class="fraction term-fraction"><span>${numerator}</span><span class="factor-grip" data-grip="denominator">${abs.d}</span></span>`;
+    return abs.d === 1n ? numerator : `<span class="fraction term-fraction" data-grip="rational-coefficient" title="Appui long sur x : saisir le coefficient complet"><span>${numerator}</span><span class="factor-grip" data-grip="denominator">${abs.d}</span></span>`;
 }
 export function blocks(e: Expr, side: 'l' | 'r', selected: string[], highlight: string[], raw = false): string {
     return terms(e).map((t, i) => {
