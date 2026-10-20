@@ -15,6 +15,10 @@ export function readSystemSnapshot(value:unknown):SystemGame|null {
         for(const v of value.events){
             if(!object(v))return null;let action:SystemAction;
             if(v.kind==='scale'&&typeof v.row==='number'&&typeof v.factor==='string')action={kind:'scale',row:v.row,factor:v.factor,...(v.operation==='multiply'||v.operation==='divide'?{operation:v.operation}:{}),...(typeof v.operand==='string'?{operand:v.operand}:{})};
+            else if(v.kind==='offset'&&typeof v.row==='number'&&typeof v.operand==='string')action={kind:'offset',row:v.row,operand:v.operand};
+            else if(v.kind==='factor'&&typeof v.row==='number'&&(v.side==='left'||v.side==='right')&&(v.variable===null||typeof v.variable==='number')&&(v.part==='coefficient'||v.part==='numerator'||v.part==='denominator')&&typeof v.value==='string')action={kind:'factor',row:v.row,side:v.side,variable:v.variable,part:v.part,value:v.value,...(typeof v.term==='number'?{term:v.term}:{})};
+            else if((v.kind==='written-move'||v.kind==='expand')&&typeof v.row==='number'&&(v.side==='left'||v.side==='right')&&typeof v.term==='number')action={kind:v.kind,row:v.row,side:v.side,term:v.term};
+            else if(v.kind==='merge'&&typeof v.row==='number'&&(v.side==='left'||v.side==='right')&&Array.isArray(v.terms)&&v.terms.every(t=>typeof t==='number'))action={kind:'merge',row:v.row,side:v.side,terms:v.terms as number[]};
             else if(v.kind==='move'&&typeof v.row==='number'&&(v.side==='left'||v.side==='right')&&(v.variable===null||typeof v.variable==='number'))action={kind:'move',row:v.row,side:v.side,variable:v.variable};
             else if(v.kind==='add'&&typeof v.source==='number'&&typeof v.target==='number')action={kind:'add',source:v.source,target:v.target};
             else if((v.kind==='isolate'||v.kind==='substitute')&&typeof v.row==='number'&&typeof v.variable==='number')action={kind:v.kind,row:v.row,variable:v.variable};

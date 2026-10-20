@@ -1,6 +1,8 @@
+import { constant, variable, expressionSum, hasVariable } from '../src/systems/expression';
+import { rowText } from '../src/systems/render';
 import { expect, it, vi } from 'vitest';
 import { rat, str, zero } from '../src/math/rational';
-import { makeRows, displayParts, scaleByInteger, transformSystem, reduceSystem, systemReady, verifySystem, systemHint, systemKey, canSubstitute, satisfies } from '../src/systems/engine';
+import { makeRows, rowHasVariable, factorAction, displayParts, scaleByInteger, transformSystem, reduceSystem, systemReady, verifySystem, systemHint, systemKey, canSubstitute, satisfies } from '../src/systems/engine';
 import { systemLevels } from '../src/systems/levels';
 import { decodeSystems, newSystemGame, readSystemSnapshot, systemSnapshot, systemUnlocked } from '../src/systems/save';
 import { decode, fresh, persist, load, KEY } from '../src/app/persistence';
@@ -94,4 +96,73 @@ it('la molette accepte uniquement les entiers et note correctement la division',
 });
 it('ne valide pas une dépendance tant que des variables restent affichées dans les deux membres',()=>{
  let rows=makeRows([[1,-1,0],[2,-2,0]]);const original=rows;rows=transformSystem(rows,{kind:'move',row:0,side:'left',variable:1});rows=transformSystem(rows,scaleByInteger(0,'multiply','-2'));rows=transformSystem(rows,{kind:'add',source:0,target:1});expect(systemReady(rows)).toBe(false);rows=transformSystem(rows,{kind:'move',row:1,side:'left',variable:1});expect(systemReady(rows)).toBe(true);expect(verifySystem(rows,original).kind).toBe('infinite');
+});
+
+
+it('saisit un coefficient entier, négatif ou fractionnaire sans toucher aux autres lignes',()=>{
+ for(const value of ['2','-1','-3','3/4','-3/4']){
+  let rows=makeRows([[2,4,8],[1,1,5]]);rows=transformSystem(rows,{kind:'scale',row:0,factor:value});
+  const before=rows,key=systemKey(rows),q=str(displayParts(rows[0]).leftVariables[0]);
+  const next=transformSystem(rows,factorAction(0,rows[0],'left',0,'coefficient'));
+  expect(displayParts(next[0]).leftVariables.map(str)).toEqual(['1','2']);expect(str(displayParts(next[0]).rightConstant)).toBe('4');
+  expect(next[1]).toEqual(before[1]);expect(systemKey(next)).toBe(key);expect(q).not.toBe('1');
+ }
+});
+it('saisit séparément le numérateur ou le dénominateur, aussi dans le membre droit',()=>{
+ let rows=transformSystem(makeRows([[3,6,12],[1,1,5]]),scaleByInteger(0,'divide','4'));
+ const numerator=transformSystem(rows,factorAction(0,rows[0],'left',0,'numerator'));
+ expect(displayParts(numerator[0]).leftVariables.map(str)).toEqual(['1/4','1/2']);expect(str(displayParts(numerator[0]).rightConstant)).toBe('1');
+ const denominator=transformSystem(rows,factorAction(0,rows[0],'left',0,'denominator'));
+ expect(displayParts(denominator[0]).leftVariables.map(str)).toEqual(['3','6']);expect(str(displayParts(denominator[0]).rightConstant)).toBe('12');
+ rows=transformSystem(rows,{kind:'move',row:0,side:'left',variable:0});
+ const right=transformSystem(rows,factorAction(0,rows[0],'right',0,'coefficient'));
+ expect(displayParts(right[0]).rightVariables.map(str)).toEqual(['1','0']);expect(str(displayParts(right[0]).rightConstant)).toBe('-4');expect(systemKey(right)).toBe(systemKey(rows));
+ expect(()=>transformSystem(rows,{kind:'factor',row:0,side:'right',variable:0,part:'coefficient',value:'99'})).toThrow(/changé/);
+ expect(()=>factorAction(0,rows[0],'left',0,'coefficient')).toThrow();
+});
+it('ajoute et soustrait aux deux membres puis extrait le dénominateur d’une constante',()=>{
+ let rows=makeRows([[1,0,2],[0,2,8]]),original=rows;
+ rows=transformSystem(rows,{kind:'offset',row:1,operand:'-2/3'});let p=displayParts(rows[1]);
+ expect(str(p.leftConstant)).toBe('-2/3');expect(str(p.rightConstant)).toBe('22/3');expect(rows[0]).toEqual(original[0]);
+ rows=transformSystem(rows,factorAction(1,rows[1],'left',null,'denominator'));p=displayParts(rows[1]);
+ expect(str(p.leftConstant)).toBe('-2');expect(str(p.rightConstant)).toBe('22');expect(p.leftVariables.map(str)).toEqual(['0','6']);expect(systemKey(rows)).toBe(systemKey(original));
+ expect(()=>transformSystem(rows,{kind:'offset',row:1,operand:'0'})).toThrow();
+});
+it('restaure les opérations et les prises de facteurs après sauvegarde',()=>{
+ const game=newSystemGame('s2');const offset={kind:'offset' as const,row:1,operand:'-3/4'};
+ for(const action of [offset,factorAction(1,transformSystem(game.rows,offset)[1],'left',null,'denominator')]){game.rows=transformSystem(game.rows,action);game.events.push(action);game.moves++;}
+ expect(readSystemSnapshot(systemSnapshot(game))?.rows).toEqual(game.rows);
+});
+
+
+it('substitue littéralement sans développer ni fusionner, puis laisse chaque étape au joueur',()=>{
+ let rows=makeRows([[1,-1,1],[2,1,7]]);rows=transformSystem(rows,{kind:'move',row:0,side:'left',variable:1});const source=rows[0],key=systemKey(rows);
+ rows=transformSystem(rows,{kind:'substitute',row:0,variable:0});const substituted=rows;
+ expect(rowText(rows[1])).toBe('2(y + 1) + y = 7');expect(systemReady(rows)).toBe(false);expect(rows[0]).toEqual(source);
+ rows=transformSystem(rows,{kind:'expand',row:1,side:'left',term:0});expect(rowText(rows[1])).toBe('2y + 2 + y = 7');expect(rowText(substituted[1])).toBe('2(y + 1) + y = 7');
+ rows=transformSystem(rows,{kind:'merge',row:1,side:'left',terms:[0,2]});expect(rowText(rows[1])).toBe('3y + 2 = 7');expect(systemKey(rows)).toBe(key);
+ expect(()=>transformSystem(rows,{kind:'merge',row:1,side:'left',terms:[0,1]})).toThrow(/semblables/);
+});
+it('remplace toutes les occurrences sur les deux membres, même quand elles se compensent',()=>{
+ let rows=makeRows([[1,-1,1],[0,1,5]]);rows=transformSystem(rows,{kind:'move',row:0,side:'left',variable:1});
+ rows[1]={...rows[1],layout:{rightVariables:[rat(1),rat(0)],leftConstant:rat(0)},written:{left:expressionSum([variable(0),variable(1)]),right:expressionSum([variable(0),constant(rat(5))])}};
+ expect(rowHasVariable(rows[1],0)).toBe(true);const source=rows[0],key=systemKey(rows);
+ rows=transformSystem(rows,{kind:'substitute',row:0,variable:0});
+ expect(rowText(rows[1])).toBe('y + 1 + y = y + 1 + 5');expect(hasVariable(rows[1].written!.left,0)||hasVariable(rows[1].written!.right,0)).toBe(false);expect(rows[0]).toEqual(source);expect(systemKey(rows)).toBe(key);expect(systemReady(rows)).toBe(false);
+});
+it('conserve le produit numérique après remplacement d’une valeur',()=>{
+ let rows=makeRows([[1,0,3],[2,1,7]]);rows=transformSystem(rows,{kind:'substitute',row:0,variable:0});
+ expect(rowText(rows[1])).toBe('2 × 3 + y = 7');expect(systemReady(rows)).toBe(false);
+ rows=transformSystem(rows,{kind:'expand',row:1,side:'left',term:0});expect(rowText(rows[1])).toBe('6 + y = 7');
+ rows=transformSystem(rows,{kind:'written-move',row:1,side:'left',term:0});expect(rowText(rows[1])).toBe('y = 7 − 6');expect(systemReady(rows)).toBe(false);
+ rows=transformSystem(rows,{kind:'merge',row:1,side:'right',terms:[0,1]});expect(rowText(rows[1])).toBe('y = 1');expect(verifySystem(rows,makeRows([[1,0,3],[2,1,7]])).values.map(str)).toEqual(['3','1']);
+});
+it('les gestes sur un produit substitué gardent ses parenthèses et les autres lignes',()=>{
+ let rows=makeRows([[1,-1,1],[2,1,7]]);rows=transformSystem(rows,{kind:'move',row:0,side:'left',variable:1});rows=transformSystem(rows,{kind:'substitute',row:0,variable:0});const key=systemKey(rows),source=rows[0];
+ const divided=transformSystem(rows,factorAction(1,rows[1],'left',null,'coefficient',0));expect(rowText(divided[1])).toBe('y + 1 + 1/2y = 7/2');expect(divided[0]).toEqual(source);expect(systemKey(divided)).toBe(key);
+ const moved=transformSystem(rows,{kind:'written-move',row:1,side:'left',term:0});expect(rowText(moved[1])).toBe('y = 7 − 2(y + 1)');expect(systemKey(moved)).toBe(key);
+});
+it('sauvegarde les parenthèses, les occurrences et chaque développement ou fusion',()=>{
+ const game=newSystemGame('s3');for(const action of [{kind:'move' as const,row:0,side:'left' as const,variable:1},{kind:'substitute' as const,row:0,variable:0},{kind:'expand' as const,row:1,side:'left' as const,term:0}]){game.rows=transformSystem(game.rows,action);game.events.push(action);game.moves++;}
+ const restored=readSystemSnapshot(systemSnapshot(game))!;expect(restored.rows).toEqual(game.rows);expect(rowText(restored.rows[1])).toBe('y + 1 + y = 7');
 });
