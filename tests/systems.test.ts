@@ -1,5 +1,5 @@
-import { constant, variable, expressionSum, fromAffine, hasVariable } from '../src/systems/expression';
-import { rowText } from '../src/systems/render';
+import { constant, variable, expressionSum, scaled, fromAffine, hasVariable } from '../src/systems/expression';
+import { equationHTML, carriedWrittenTerm, rowText } from '../src/systems/render';
 import { expect, it, vi } from 'vitest';
 import { rat, str, zero } from '../src/math/rational';
 import { makeRows, methodAllows, transformForMethod, calculateSystemNumbers, manualSystemMoves, rowHasVariable, factorAction, displayParts, scaleByInteger, transformSystem, reduceSystem, systemReady, verifySystem, systemHint, systemKey, canSubstitute, satisfies } from '../src/systems/engine';
@@ -251,4 +251,18 @@ it('réserve la substitution et les combinaisons à leurs chapitres sans interdi
  for(const method of ['substitution','combination','choice'] as const)for(const action of [factorAction(0,makeRows([[2,0,4],[1,1,5]])[0],'left',0,'coefficient'),{kind:'scale' as const,row:0,factor:'-1'},{kind:'offset' as const,row:0,operand:'-2'},{kind:'move' as const,row:1,side:'left' as const,variable:0}])expect(methodAllows(method,action)).toBe(true);
  // Previously saved unrestricted journals remain replayable; only new actions use the lesson gate.
  const old=readSystemSnapshot({level:'s1',events:[wheel,add],moves:2,errors:0,hints:0});expect(old).not.toBeNull();expect(systemKey(old!.rows)).toBe(systemKey(rows));
+});
+
+
+it('encadre le facteur négatif après substitution sans développer ni fusionner',()=>{
+ const rows=makeRows([[4,-3,-28],[1,1,0]]);rows[1]=transformSystem(rows,{kind:'move',row:1,side:'left',variable:1})[1];
+ const next=transformForMethod(rows,{kind:'substitute',row:1,variable:0,numeric:true},'choice');expect(rowText(next[0])).toBe('4 × (-y) − 3y = -28');
+ expect(equationHTML(next[0],0)).toContain('math-group');expect(carriedWrittenTerm(next[0],'left',0)).toContain('math-group');
+ const expanded=transformSystem(next,{kind:'expand',row:0,side:'left',term:0});expect(rowText(expanded[0])).toBe('-4y − 3y = -28');expect(systemKey(expanded)).toBe(systemKey(rows));
+});
+it('garde les parenthèses pour les opposés imbriqués et les coefficients fractionnaires',()=>{
+ const row=makeRows([[1,0]])[0];
+ for(const factor of [rat(4),rat(-1),rat(4,3)]){row.written={left:scaled(factor,scaled(rat(-1),variable(0))),right:constant(rat(0))};expect(equationHTML(row,0)).toContain('math-group');expect(carriedWrittenTerm(row,'left',0)).toContain('math-group');}
+ row.written={left:expressionSum([scaled(rat(-1),scaled(rat(-1),variable(0))),constant(rat(2))]),right:constant(rat(0))};expect(rowText(row)).toBe('-(-x) + 2 = 0');expect(equationHTML(row,0)).toContain('math-group');
+ row.written.left=expressionSum([variable(0),scaled(rat(-1),scaled(rat(-1),variable(0)))]);expect(rowText(row)).toBe('x − (-x) = 0');expect(equationHTML(row,0)).toContain('math-group');
 });

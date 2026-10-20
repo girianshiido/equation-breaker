@@ -22,19 +22,20 @@ export function carriedTerm(row:Row,side:Side,variable:number|null,reversed=fals
 function writtenMath(e:LinearExpr):string {
  if(e.kind==='constant')return qMath(e.value);
  if(e.kind==='variable')return `<i data-system-grip="coefficient">${variables[e.variable]}</i>`;
- if(e.kind==='sum')return fenced(expressionTerms(e).map((t,i)=>{const {negative,absolute}=signedExpression(t);return `<span class="sys-sign ${i?'sys-binary-sign':'sys-unary-sign'}">${negative?'−':i?'+':''}</span>${writtenMath(absolute)}`;}).join(''));
+ if(e.kind==='sum')return fenced(expressionTerms(e).map((t,i)=>{const {negative,absolute}=signedExpression(t);return `<span class="sys-sign ${i?'sys-binary-sign':'sys-unary-sign'}">${negative?'−':i?'+':''}</span>${signedBodyMath(absolute)}`;}).join(''));
  const negative=e.factor.n<0n,abs=negative?neg(e.factor):e.factor;
  if(e.body.kind==='variable')return `${negative?'−':''}${variableTerm(abs,variables[e.body.variable])}`;
  const body=writtenMath(e.body),coefficient=`<span data-system-grip="numerator">${abs.n===1n?'':abs.n}</span>`;
  const multiplication=e.body.kind==='sum'?'':abs.n===1n?'':' × ';
- const shown=e.body.kind==='constant'&&e.body.value.n<0n?fenced(body):body;
+ const shown=signedExpression(e.body).negative?fenced(body):body;
  return `${negative?'−':''}${abs.d===1n?`${coefficient}${multiplication}${shown}`:`<span class="fraction"><span>${coefficient}${multiplication}${shown}</span><span data-system-grip="denominator">${abs.d}</span></span>`}`;
 }
+function signedBodyMath(e:LinearExpr):string{const body=writtenMath(e);return signedExpression(e).negative?fenced(body):body;}
 export function carriedWrittenTerm(row:Row,side:Side,index:number,reversed=false):string{const e=writtenTerm(row,side,index);return writtenMath(reversed?negateExpression(e):e);}
 function writtenSideHTML(e:LinearExpr,row:number,side:Side,interactive:boolean):string{
  return expressionTerms(e).map((node,index)=>{
   const {negative,absolute}=signedExpression(node),simple=simpleTerm(node),j=simple?.variable;
-  const content=`<span class="sys-sign ${index?'sys-binary-sign':'sys-unary-sign'}">${negative?'−':index?'+':''}</span><span>${writtenMath(absolute)}</span>`;
+  const content=`<span class="sys-sign ${index?'sys-binary-sign':'sys-unary-sign'}">${negative?'−':index?'+':''}</span><span>${signedBodyMath(absolute)}</span>`;
   return interactive?`<button class="sys-variable sys-term" aria-keyshortcuts="Alt+${side==='left'?'ArrowRight':'ArrowLeft'}" data-written-term="${index}" data-system-term="${j===null?'constant':j===undefined?'group':j}" ${j===null||j===undefined?'':`data-variable="${j}"`} data-row="${row}" data-side="${side}" aria-label="Sélectionner ${escape(expressionText(node,variables))} dans la ligne ${row+1}"><span>${content}</span></button>`:`<span class="sys-term">${content}</span>`;
  }).join('');
 }

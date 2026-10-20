@@ -62,7 +62,7 @@ export function signedExpression(e:LinearExpr):{negative:boolean;absolute:Linear
 }
 export function expressionText(e:LinearExpr,names:readonly string[]):string{
  if(e.kind==='constant')return str(e.value);if(e.kind==='variable')return names[e.variable];
- if(e.kind==='sum')return e.terms.map((t,i)=>{const {negative,absolute}=signedExpression(t);return `${negative?(i?' − ':'-'):(i?' + ':'')}${expressionText(absolute,names)}`;}).join('');
+ if(e.kind==='sum')return e.terms.map((t,i)=>{const {negative,absolute}=signedExpression(t);return `${negative?(i?' − ':'-'):(i?' + ':'')}${negative&&signedExpression(absolute).negative?`(${expressionText(absolute,names)})`:expressionText(absolute,names)}`;}).join('');
  const b=expressionText(e.body,names);
  return `${e.body.kind==='variable'&&e.factor.n===-e.factor.d?'-':str(e.factor)}${e.body.kind==='variable'?b:e.body.kind==='sum'?`(${b})`:` × ${b.startsWith('-')?`(${b})`:b}`}`;
 }
