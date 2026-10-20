@@ -37,6 +37,12 @@ export function scaleExpression(e:LinearExpr,q:Rational):LinearExpr{
  // Scaling an equation changes outer coefficients without opening parentheses.
  return expressionSum(expressionTerms(e).map(t=>t.kind==='constant'?constant(mul(t.value,q)):t.kind==='scale'?scaled(mul(t.factor,q),t.body):scaled(q,t)));
 }
+/** Arithmetic closes numerical subexpressions without distributing or merging variables. */
+export function calculateNumbers(e:LinearExpr):LinearExpr{
+ if(e.kind==='scale'){const body=calculateNumbers(e.body);return body.kind==='constant'?constant(mul(e.factor,body.value)):{...e,body};}
+ if(e.kind==='sum'){const terms=e.terms.map(calculateNumbers);return terms.every(t=>t.kind==='constant')?constant(terms.reduce((q,t)=>add(q,t.kind==='constant'?t.value:rat(0)),rat(0))):expressionSum(terms);}
+ return e;
+}
 export function replaceVariable(e:LinearExpr,j:number,replacement:LinearExpr):LinearExpr{
  if(e.kind==='variable')return e.variable===j?replacement:e;
  if(e.kind==='sum')return {kind:'sum',terms:e.terms.map(t=>replaceVariable(t,j,replacement))};

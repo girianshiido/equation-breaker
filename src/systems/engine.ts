@@ -1,4 +1,4 @@
-import { constant, variable, negateExpression, mergeArrival, expressionSum, expressionTerms, fromAffine, evaluateExpression, scaled, scaleExpression, replaceVariable, hasVariable, simpleTerm, canExpand, expandExpression, boundExpression, type LinearExpr } from './expression';
+import { constant, variable, calculateNumbers, negateExpression, mergeArrival, expressionSum, expressionTerms, fromAffine, evaluateExpression, scaled, scaleExpression, replaceVariable, hasVariable, simpleTerm, canExpand, expandExpression, boundExpression, type LinearExpr } from './expression';
 import { rat, add, sub, mul, div, neg, zero, one, equal, str, readRational, type Rational } from '../math/rational';
 export const variables = ['x', 'y', 'z'] as const;
 export interface Row { coefficients:Rational[]; right:Rational; isolated?:number; layout?:{rightVariables:Rational[];leftConstant:Rational};written?:{left:LinearExpr;right:LinearExpr} }
@@ -6,7 +6,7 @@ export type SystemRows=Row[];
 export type Side='left'|'right';
 export type FactorPart='coefficient'|'numerator'|'denominator';
 /** Missing written-move.merge keeps the replay semantics of pre-1.5.2 saves. */
-export type SystemAction = {kind:'scale';row:number;factor:string;operation?:'multiply'|'divide';operand?:string} | {kind:'offset';row:number;operand:string} | {kind:'factor';row:number;side:Side;variable:number|null;part:FactorPart;value:string;term?:number} | {kind:'written-move';row:number;side:Side;term:number;merge?:true} | {kind:'expand';row:number;side:Side;term:number} | {kind:'merge';row:number;side:Side;terms:number[]} | {kind:'add';source:number;target:number} | {kind:'move';row:number;side:Side;variable:number|null} | {kind:'isolate'|'substitute';row:number;variable:number};
+export type SystemAction = {kind:'numeric'} | {kind:'scale';row:number;factor:string;operation?:'multiply'|'divide';operand?:string} | {kind:'offset';row:number;operand:string} | {kind:'factor';row:number;side:Side;variable:number|null;part:FactorPart;value:string;term?:number} | {kind:'written-move';row:number;side:Side;term:number;merge?:true} | {kind:'expand';row:number;side:Side;term:number} | {kind:'merge';row:number;side:Side;terms:number[]} | {kind:'add';source:number;target:number} | {kind:'move';row:number;side:Side;variable:number|null} | {kind:'isolate';row:number;variable:number} | {kind:'substitute';row:number;variable:number;numeric?:true};
 export interface Reduction {rows:Row[];pivots:number[];kind:'unique'|'infinite'|'none';values:Rational[];free:number[]}
 export function makeRows(values:number[][]):Row[]{return values.map(values=>({coefficients:values.slice(0,-1).map(n=>rat(n)),right:rat(values.at(-1)!)}));}
 export const copyRows=(rows:Row[])=>rows.map(r=>({...r,coefficients:[...r.coefficients],...(r.layout?{layout:{rightVariables:[...r.layout.rightVariables],leftConstant:r.layout.leftConstant}}:{})}));
@@ -60,7 +60,10 @@ export function scaleByInteger(row:number,operation:'multiply'|'divide',operand:
  if(zero(q)||one(q))throw Error('Choisis un entier différent de 0 et de 1.');
  return {kind:'scale',row,operation,operand:str(q),factor:str(operation==='divide'?div(rat(1),q):q)};
 }
+export const manualSystemMoves=(events:SystemAction[])=>events.filter(e=>e.kind!=='numeric').length;
+export function calculateSystemNumbers(rows:Row[]):Row[]{return rows.map(r=>r.written?withWritten(r,{left:calculateNumbers(r.written.left),right:calculateNumbers(r.written.right)}):r);}
 export function transformSystem(original:Row[],action:SystemAction):Row[]{
+ if(action.kind==='numeric')return calculateSystemNumbers(original);
  const rows=copyRows(original),n=rows[0].coefficients.length;
  const rowAt=(index:number)=>{if(!Number.isInteger(index)||!rows[index])throw Error('Ligne inconnue.');return rows[index];};
  if(action.kind==='scale'){
@@ -111,7 +114,8 @@ export function transformSystem(original:Row[],action:SystemAction):Row[]{
    const sourceSides=writtenSides(source),replacement=sourceSides[isolatedSide(source,j)==='left'?'right':'left'];
    for(let i=0;i<rows.length;i++)if(i!==action.row){
     const target=rows[i],w=writtenSides(target);if(!hasVariable(w.left,j)&&!hasVariable(w.right,j))continue;
-    rows[i]=withWritten(target,{left:replaceVariable(w.left,j,replacement),right:replaceVariable(w.right,j,replacement)});
+    const left=replaceVariable(w.left,j,replacement),right=replaceVariable(w.right,j,replacement);
+    rows[i]=withWritten(target,{left:action.numeric?calculateNumbers(left):left,right:action.numeric?calculateNumbers(right):right});
    }
   }
  }
@@ -134,6 +138,7 @@ export function systemReady(rows:Row[]):boolean{
 }
 export function verifySystem(rows:Row[],initial:Row[]):Reduction{if(!systemReady(rows))throw Error('Continue les manipulations : isole chaque inconnue en déplaçant les termes, ou fais apparaître une égalité qui permet de conclure.');if(systemKey(rows)!==systemKey(initial))throw Error('Le système n’a plus les mêmes solutions. Annule la dernière étape.');return reduceSystem(rows);}
 export function actionLabel(action:SystemAction):string{
+ if(action.kind==='numeric')return 'Calcul numérique automatique';
  if(action.kind==='written-move')return `Passer le terme dans l’autre membre de L${action.row+1}`;
  if(action.kind==='expand')return `Développer ou calculer le terme de L${action.row+1}`;
  if(action.kind==='merge')return `Fusionner les termes sélectionnés de L${action.row+1}`;
@@ -161,7 +166,7 @@ export function systemHint(rows:Row[],method:'substitution'|'combination'|'choic
  }
  let action:SystemAction|undefined;
  if(method!=='combination'){
-  for(let i=0;i<rows.length&&!action;i++)for(let j=0;j<rows[0].coefficients.length;j++)if(canSubstitute(rows[i],j)&&rows[i].coefficients.slice(0,j).every(zero)&&rows.some((r,k)=>k!==i&&rowHasVariable(r,j))){action={kind:'substitute',row:i,variable:j};break;}
+  for(let i=0;i<rows.length&&!action;i++)for(let j=0;j<rows[0].coefficients.length;j++)if(canSubstitute(rows[i],j)&&rows[i].coefficients.slice(0,j).every(zero)&&rows.some((r,k)=>k!==i&&rowHasVariable(r,j))){action={kind:'substitute',row:i,variable:j,numeric:true};break;}
   for(let j=0;j<rows[0].coefficients.length&&!action;j++){
    const candidates=rows.map((r,i)=>({i,count:r.coefficients.filter(q=>!zero(q)).length})).filter(({i})=>!zero(rows[i].coefficients[j])&&rows[i].coefficients.slice(0,j).every(zero)).sort((a,b)=>a.count-b.count);
    const i=candidates[0]?.i;if(i!==undefined){const step=manualStep(rows,i,j);if(step)action=step;}

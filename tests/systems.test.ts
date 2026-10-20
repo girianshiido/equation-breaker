@@ -2,7 +2,7 @@ import { constant, variable, expressionSum, fromAffine, hasVariable } from '../s
 import { rowText } from '../src/systems/render';
 import { expect, it, vi } from 'vitest';
 import { rat, str, zero } from '../src/math/rational';
-import { makeRows, rowHasVariable, factorAction, displayParts, scaleByInteger, transformSystem, reduceSystem, systemReady, verifySystem, systemHint, systemKey, canSubstitute, satisfies } from '../src/systems/engine';
+import { makeRows, calculateSystemNumbers, manualSystemMoves, rowHasVariable, factorAction, displayParts, scaleByInteger, transformSystem, reduceSystem, systemReady, verifySystem, systemHint, systemKey, canSubstitute, satisfies } from '../src/systems/engine';
 import { systemLevels } from '../src/systems/levels';
 import { decodeSystems, newSystemGame, readSystemSnapshot, systemSnapshot, systemUnlocked } from '../src/systems/save';
 import { decode, fresh, persist, load, KEY } from '../src/app/persistence';
@@ -191,4 +191,28 @@ it('rejoue les anciens déplacements et fusions et conserve la nouvelle fusion a
  const previous=readSystemSnapshot(old)!;expect(previous).not.toBeNull();expect(rowText(previous.rows[1])).toBe('y = 3');
  const current=readSystemSnapshot({...old,events:[old.events[0],{...old.events[1],merge:true}],moves:2})!;
  expect(rowText(current.rows[1])).toBe('y = 3');expect(systemSnapshot(current).events.at(-1)).toMatchObject({merge:true});
+});
+
+
+it('calcule automatiquement 3+1 et 2×3+1 après substitution, sans étape supplémentaire',()=>{
+ for(const coefficient of [1,2]){
+  let rows=makeRows([[1,-coefficient,1],[0,1,3]]);rows=transformSystem(rows,{kind:'move',row:0,side:'left',variable:1});
+  const source=rows[1],raw=transformSystem(rows,{kind:'substitute',row:1,variable:1}),next=transformSystem(rows,{kind:'substitute',row:1,variable:1,numeric:true});
+  expect(rowText(raw[0])).toBe(coefficient===1?'x = 3 + 1':'x = 2 × 3 + 1');expect(rowText(next[0])).toBe(coefficient===1?'x = 4':'x = 7');expect(next[1]).toEqual(source);expect(systemKey(next)).toBe(systemKey(rows));expect(systemReady(next)).toBe(true);
+ }
+});
+it('ne réduit que les sous-expressions numériques et conserve les développements symboliques',()=>{
+ let rows=makeRows([[1,-1,1],[2,1,7]]);rows=transformSystem(rows,{kind:'move',row:0,side:'left',variable:1});
+ const next=transformSystem(rows,{kind:'substitute',row:0,variable:0,numeric:true});expect(rowText(next[1])).toBe('2(y + 1) + y = 7');
+ const numeric=transformSystem(makeRows([[1,0,3],[2,1,7]]),{kind:'substitute',row:0,variable:0,numeric:true});expect(rowText(numeric[1])).toBe('6 + y = 7');
+});
+it('termine les calculs numériques anciens, négatifs ou fractionnaires sans distribuer un groupe',()=>{
+ const rows=makeRows([[1,0,2],[0,1,3]]);rows[0].written={left:variable(0),right:expressionSum([constant(rat(-3)),constant(rat(5))])};
+ expect(rowText(calculateSystemNumbers(rows)[0])).toBe('x = 2');expect(rowText(rows[0])).toBe('x = -3 + 5');
+ rows[0].written.right=expressionSum([constant(rat(-1,3)),constant(rat(5,6))]);expect(rowText(calculateSystemNumbers(rows)[0])).toBe('x = 1/2');
+});
+it('enregistre un calcul automatique sans gonfler le nombre de transformations et rejoue son résultat',()=>{
+ const game=newSystemGame('s3');for(const action of [{kind:'move' as const,row:0,side:'left' as const,variable:1},{kind:'substitute' as const,row:0,variable:0},{kind:'numeric' as const}]){game.rows=transformSystem(game.rows,action);game.events.push(action);}
+ game.moves=manualSystemMoves(game.events);expect(game.moves).toBe(2);const replay=readSystemSnapshot(systemSnapshot(game))!;expect(replay.moves).toBe(2);expect(replay.rows).toEqual(game.rows);
+ const current=newSystemGame('s2');for(const action of [{kind:'substitute' as const,row:0,variable:1,numeric:true as const}]){current.rows=transformSystem(current.rows,action);current.events.push(action);current.moves++;}expect(readSystemSnapshot(systemSnapshot(current))!.events[0]).toMatchObject({numeric:true});
 });
