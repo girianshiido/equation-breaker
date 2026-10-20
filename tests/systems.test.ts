@@ -1,4 +1,4 @@
-import { constant, variable, expressionSum, hasVariable } from '../src/systems/expression';
+import { constant, variable, expressionSum, fromAffine, hasVariable } from '../src/systems/expression';
 import { rowText } from '../src/systems/render';
 import { expect, it, vi } from 'vitest';
 import { rat, str, zero } from '../src/math/rational';
@@ -165,4 +165,30 @@ it('les gestes sur un produit substitué gardent ses parenthèses et les autres 
 it('sauvegarde les parenthèses, les occurrences et chaque développement ou fusion',()=>{
  const game=newSystemGame('s3');for(const action of [{kind:'move' as const,row:0,side:'left' as const,variable:1},{kind:'substitute' as const,row:0,variable:0},{kind:'expand' as const,row:1,side:'left' as const,term:0}]){game.rows=transformSystem(game.rows,action);game.events.push(action);game.moves++;}
  const restored=readSystemSnapshot(systemSnapshot(game))!;expect(restored.rows).toEqual(game.rows);expect(rowText(restored.rows[1])).toBe('y + 1 + y = 7');
+});
+
+
+it('fusionne automatiquement le terme transposé sans réduire une substitution',()=>{
+ const rows=makeRows([[5,0,5],[0,1,3]]);rows[0]={...rows[0],layout:{rightVariables:[rat(0),rat(0)],leftConstant:rat(-3)},written:{left:fromAffine([rat(5),rat(0)],rat(-3)),right:constant(rat(2))}};
+ const next=transformSystem(rows,{kind:'written-move',row:0,side:'left',term:1,merge:true});
+ expect(rowText(next[0])).toBe('5x = 5');expect(next[1]).toEqual(rows[1]);expect(systemKey(next)).toBe(systemKey(rows));expect(rowText(rows[0])).toBe('5x − 3 = 2');
+ let substituted=transformSystem(makeRows([[1,0,3],[2,1,7]]),{kind:'substitute',row:0,variable:0});expect(rowText(substituted[1])).toBe('2 × 3 + y = 7');
+ substituted=transformSystem(substituted,{kind:'expand',row:1,side:'left',term:0});substituted=transformSystem(substituted,{kind:'written-move',row:1,side:'left',term:0,merge:true});expect(rowText(substituted[1])).toBe('y = 1');expect(systemReady(substituted)).toBe(true);
+});
+it('fusionne les monômes à l’arrivée, dans les deux sens et avec des fractions',()=>{
+ for(const side of ['left','right'] as const){
+  const row=makeRows([[0,1,5]])[0];row.written={left:expressionSum([fromAffine([rat(2,3),rat(0)],rat(0)),variable(1)]),right:expressionSum([fromAffine([rat(2,3),rat(0)],rat(0)),constant(rat(5))])};row.layout={rightVariables:[rat(2,3),rat(0)],leftConstant:rat(0)};
+  const next=transformSystem([row],{kind:'written-move',row:0,side,term:0,merge:true});expect(rowText(next[0])).toBe('y = 5');expect(systemKey(next)).toBe(systemKey([row]));
+ }
+});
+it('ne développe aucun groupe lors de la fusion consécutive à un déplacement',()=>{
+ let rows=makeRows([[1,-1,1],[2,1,7]]);rows=transformSystem(rows,{kind:'move',row:0,side:'left',variable:1});rows=transformSystem(rows,{kind:'substitute',row:0,variable:0});
+ rows=transformSystem(rows,{kind:'offset',row:1,operand:'-3'});const next=transformSystem(rows,{kind:'written-move',row:1,side:'left',term:2,merge:true});
+ expect(rowText(next[1])).toBe('2(y + 1) + y = 7');expect(rowText(rows[1])).toBe('2(y + 1) + y − 3 = 7 − 3');
+});
+it('rejoue les anciens déplacements et fusions et conserve la nouvelle fusion automatique',()=>{
+ const old={level:'s1',events:[{kind:'substitute',row:0,variable:0},{kind:'written-move',row:1,side:'left',term:0},{kind:'merge',row:1,side:'right',terms:[0,1]}],moves:3,errors:0,hints:0};
+ const previous=readSystemSnapshot(old)!;expect(previous).not.toBeNull();expect(rowText(previous.rows[1])).toBe('y = 3');
+ const current=readSystemSnapshot({...old,events:[old.events[0],{...old.events[1],merge:true}],moves:2})!;
+ expect(rowText(current.rows[1])).toBe('y = 3');expect(systemSnapshot(current).events.at(-1)).toMatchObject({merge:true});
 });

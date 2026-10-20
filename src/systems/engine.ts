@@ -1,11 +1,12 @@
-import { constant, variable, negateExpression, expressionSum, expressionTerms, fromAffine, evaluateExpression, scaled, scaleExpression, replaceVariable, hasVariable, simpleTerm, canExpand, expandExpression, boundExpression, type LinearExpr } from './expression';
+import { constant, variable, negateExpression, mergeArrival, expressionSum, expressionTerms, fromAffine, evaluateExpression, scaled, scaleExpression, replaceVariable, hasVariable, simpleTerm, canExpand, expandExpression, boundExpression, type LinearExpr } from './expression';
 import { rat, add, sub, mul, div, neg, zero, one, equal, str, readRational, type Rational } from '../math/rational';
 export const variables = ['x', 'y', 'z'] as const;
 export interface Row { coefficients:Rational[]; right:Rational; isolated?:number; layout?:{rightVariables:Rational[];leftConstant:Rational};written?:{left:LinearExpr;right:LinearExpr} }
 export type SystemRows=Row[];
 export type Side='left'|'right';
 export type FactorPart='coefficient'|'numerator'|'denominator';
-export type SystemAction = {kind:'scale';row:number;factor:string;operation?:'multiply'|'divide';operand?:string} | {kind:'offset';row:number;operand:string} | {kind:'factor';row:number;side:Side;variable:number|null;part:FactorPart;value:string;term?:number} | {kind:'written-move';row:number;side:Side;term:number} | {kind:'expand';row:number;side:Side;term:number} | {kind:'merge';row:number;side:Side;terms:number[]} | {kind:'add';source:number;target:number} | {kind:'move';row:number;side:Side;variable:number|null} | {kind:'isolate'|'substitute';row:number;variable:number};
+/** Missing written-move.merge keeps the replay semantics of pre-1.5.2 saves. */
+export type SystemAction = {kind:'scale';row:number;factor:string;operation?:'multiply'|'divide';operand?:string} | {kind:'offset';row:number;operand:string} | {kind:'factor';row:number;side:Side;variable:number|null;part:FactorPart;value:string;term?:number} | {kind:'written-move';row:number;side:Side;term:number;merge?:true} | {kind:'expand';row:number;side:Side;term:number} | {kind:'merge';row:number;side:Side;terms:number[]} | {kind:'add';source:number;target:number} | {kind:'move';row:number;side:Side;variable:number|null} | {kind:'isolate'|'substitute';row:number;variable:number};
 export interface Reduction {rows:Row[];pivots:number[];kind:'unique'|'infinite'|'none';values:Rational[];free:number[]}
 export function makeRows(values:number[][]):Row[]{return values.map(values=>({coefficients:values.slice(0,-1).map(n=>rat(n)),right:rat(values.at(-1)!)}));}
 export const copyRows=(rows:Row[])=>rows.map(r=>({...r,coefficients:[...r.coefficients],...(r.layout?{layout:{rightVariables:[...r.layout.rightVariables],leftConstant:r.layout.leftConstant}}:{})}));
@@ -82,7 +83,7 @@ export function transformSystem(original:Row[],action:SystemAction):Row[]{
   }else{
    const node=writtenTerm(row,side,action.term);
    if(action.kind==='expand'){if(!canExpand(node))throw Error('Ce terme est déjà développé.');terms.splice(action.term,1,...expandExpression(node));w[side]=expressionSum(terms);}
-   else{terms.splice(action.term,1);w[side]=expressionSum(terms);const target=side==='left'?'right':'left';w[target]=expressionSum([...expressionTerms(w[target]),negateExpression(node)]);}
+   else{terms.splice(action.term,1);w[side]=expressionSum(terms);const target=side==='left'?'right':'left';const arrival=negateExpression(node);w[target]=action.merge?mergeArrival(w[target],arrival):expressionSum([...expressionTerms(w[target]),arrival]);}
   }
   rows[action.row]=withWritten(row,w);
  }else if(action.kind==='offset'){
@@ -144,7 +145,7 @@ export function actionLabel(action:SystemAction):string{
  return action.kind==='isolate'?`Isoler ${variables[action.variable]} dans L${action.row+1}`:`Substituer ${variables[action.variable]} dans les autres équations`;
 }
 function scaleToward(row:number,q:Rational):SystemAction{if(q.n===1n||q.n===-1n)return scaleByInteger(row,'divide',String(q.n*q.d));return scaleByInteger(row,'multiply',String(q.n));}
-function moveAction(row:Row,index:number,side:Side,j:number|null):SystemAction{if(row.written){const term=expressionTerms(row.written[side]).findIndex(t=>simpleTerm(t)?.variable===j);if(term>=0)return {kind:'written-move',row:index,side,term};}return {kind:'move',row:index,side,variable:j};}
+function moveAction(row:Row,index:number,side:Side,j:number|null):SystemAction{if(row.written){const term=expressionTerms(row.written[side]).findIndex(t=>simpleTerm(t)?.variable===j);if(term>=0)return {kind:'written-move',row:index,side,term,merge:true};}return {kind:'move',row:index,side,variable:j};}
 function manualStep(rows:Row[],i:number,j:number):SystemAction|null{
  const row=rows[i],p=displayParts(row);if(!zero(p.rightVariables[j]))return moveAction(row,i,'right',j);
  for(let k=0;k<row.coefficients.length;k++)if(k!==j&&!zero(p.leftVariables[k]))return moveAction(row,i,'left',k);

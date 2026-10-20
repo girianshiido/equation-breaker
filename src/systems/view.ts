@@ -58,7 +58,7 @@ export class SystemsController {
         const offset=`<span class="sys-offset"><label>Aux deux membres de L${row+1}<input id="sys-offset-value" aria-label="Nombre à ajouter ou soustraire aux deux membres de L${row+1}" inputmode="text" placeholder="Nombre" maxlength="40"></label><button class="action" data-offset="add" aria-label="Ajouter aux deux membres">+</button><button class="action" data-offset="subtract" aria-label="Soustraire aux deux membres">−</button></span>`;
         return `${substitution}${expansion}${factorButton}${moves}${factors}${btn('sys-multiply','Ouvrir la molette','action')}${btn('sys-negate','× (−1)','action')}${this.game.rows.map((_,i)=>i!==row?`<button class="action" data-add="${i}" aria-label="Ajouter la ligne ${row+1} à la ligne ${i+1}">L${row+1} + L${i+1}</button>`:'').join('')}${offset}`;
     }
-    private selectedMove():SystemAction{const s=this.selection!;return s.term!==undefined?{kind:'written-move',row:s.row,side:s.side!,term:s.term}:{kind:'move',row:s.row,side:s.side!,variable:s.constant?null:s.variable!};}
+    private selectedMove():SystemAction{const s=this.selection!;return s.term!==undefined?{kind:'written-move',row:s.row,side:s.side!,term:s.term,merge:true}:{kind:'move',row:s.row,side:s.side!,variable:s.constant?null:s.variable!};}
     private renderGame(){
         if(!this.game)return this.map();if(this.result)return this.renderResult();
         this.showingGame=true;const g=this.game,l=this.level,n=g.rows[0].coefficients.length;
@@ -160,15 +160,15 @@ export class SystemsController {
     private bindTermDrags(){
         const board=document.querySelector<HTMLElement>('#sys-board')!,root=document.querySelector<HTMLElement>('.sys-game')!,signal=this.abort!.signal;
         type Pointer={id:number;row:number;side:Side;variable:number|null;x:number;y:number;startX:number;startY:number;button:HTMLElement;part?:FactorPart;term?:number;held?:boolean};
-        let pointer:Pointer|null=null,active=false,ghost:HTMLElement|null=null,frame=0,timer=0,crossed=false,suppress=0,equal:HTMLElement|null=null,equalText='',equalRect:DOMRect|null=null,targetRect:DOMRect|null=null,source:HTMLElement|null=null,sourceHTML='';
+        let pointer:Pointer|null=null,active=false,ghost:HTMLElement|null=null,frame=0,timer=0,crossed=false,suppress=0,equal:HTMLElement|null=null,equalText='',equalRect:DOMRect|null=null,targetRect:{left:number;right:number;top:number;bottom:number}|null=null,dropLine:HTMLElement|null=null,source:HTMLElement|null=null,sourceHTML='';
         const controls=()=>root.querySelectorAll<HTMLElement>('.sys-controls,.sys-action-panel,.sys-heading,.sys-default-wheel,#sys-validate');
-        const actionFor=(p:Pointer):SystemAction=>p.part?factorAction(p.row,this.game!.rows[p.row],p.side,p.variable,p.part,p.term):p.term!==undefined?{kind:'written-move',row:p.row,side:p.side,term:p.term}:{kind:'move',row:p.row,side:p.side,variable:p.variable};
+        const actionFor=(p:Pointer):SystemAction=>p.part?factorAction(p.row,this.game!.rows[p.row],p.side,p.variable,p.part,p.term):p.term!==undefined?{kind:'written-move',row:p.row,side:p.side,term:p.term,merge:true}:{kind:'move',row:p.row,side:p.side,variable:p.variable};
         const cleanup=()=>{
             clearTimeout(timer);cancelAnimationFrame(frame);ghost?.remove();ghost=null;
             if(source){source.innerHTML=sourceHTML;source=null;}
             if(equal){equal.textContent=equalText;equal.removeAttribute('aria-label');}equal=null;
             root.dataset.dragging='false';controls().forEach(el=>el.inert=false);
-            board.querySelectorAll('.sys-term-lifted,.sys-member-target').forEach(el=>el.classList.remove('sys-term-lifted','sys-member-target'));
+            board.querySelectorAll('.sys-term-lifted,.sys-member-target').forEach(el=>el.classList.remove('sys-term-lifted','sys-member-target'));if(dropLine){delete dropLine.dataset.dropSide;dropLine.classList.remove('sys-drop-over');dropLine.style.removeProperty('--sys-drop-split');dropLine=null;}targetRect=null;
             if(pointer&&board.hasPointerCapture(pointer.id))board.releasePointerCapture(pointer.id);
             pointer=null;active=false;crossed=false;
         };
@@ -180,26 +180,35 @@ export class SystemsController {
             const q=factorValue(this.game!.rows[pointer.row],pointer.side,pointer.variable,pointer.part,pointer.term),value=qMath(q);
             return crossed?`${pointer.part==='denominator'?'×':'÷'} ${q.n<0n?`(${value})`:value}`:value;
         };
+        const measureDrop=()=>{
+            if(!pointer||!dropLine||!equal)return;
+            equalRect=equal.getBoundingClientRect();const r=dropLine.getBoundingClientRect(),b=board.getBoundingClientRect(),rows=[...board.querySelectorAll<HTMLElement>('[data-system-row]')],i=pointer.row;
+            const boundary=equalRect.x+equalRect.width/2;
+            targetRect={left:pointer.side==='left'?boundary:r.left,right:pointer.side==='left'?r.right:boundary,top:i===0?Math.max(b.top+1,r.top-20):r.top,bottom:i===rows.length-1?Math.min(b.bottom-56,r.bottom+20):r.bottom};
+            dropLine.style.setProperty('--sys-drop-split',`${boundary-r.left}px`);
+        };
+        const isOverDrop=()=>!!pointer&&!!targetRect&&crossed&&pointer.x>=targetRect.left&&pointer.x<=targetRect.right&&pointer.y>=targetRect.top&&pointer.y<=targetRect.bottom;
         const draw=()=>{
             frame=0;if(!pointer||!ghost||!equalRect)return;
             ghost.style.transform=`translate3d(${pointer.x}px,${pointer.y-30}px,0) translate(-50%,-50%)`;
-            const next=pointer.side==='left'?pointer.x>equalRect.x+equalRect.width/2:pointer.x<equalRect.x+equalRect.width/2;
+            const next=pointer.side==='left'?pointer.x>=equalRect.x+equalRect.width/2:pointer.x<=equalRect.x+equalRect.width/2;
             if(next!==crossed){crossed=next;ghost.innerHTML=ghostHTML();ghost.classList.toggle('changed-sign',crossed);this.options.sound('cross');}
+            dropLine?.classList.toggle('sys-drop-over',isOverDrop());
         };
         const begin=()=>{
             clearTimeout(timer);if(!pointer||active)return;
             active=true;crossed=false;this.options.sound('lift');
             const line=pointer.button.closest<HTMLElement>('[data-system-row]')!,destination=pointer.side==='left'?'right':'left',font=getComputedStyle(pointer.button).font;
-            equal=line.querySelector<HTMLElement>('.sys-equal')!;equalText=equal.textContent!;equalRect=equal.getBoundingClientRect();targetRect=line.querySelector<HTMLElement>(`.sys-${destination}`)!.getBoundingClientRect();
+            equal=line.querySelector<HTMLElement>('.sys-equal')!;equalText=equal.textContent!;equalRect=equal.getBoundingClientRect();dropLine=line;line.dataset.dropSide=destination;
             line.querySelector(`.sys-${destination}`)!.classList.add('sys-member-target');equal.textContent='↝';equal.setAttribute('aria-label','Transformation en cours');
             board.setPointerCapture(pointer.id);
             if(pointer.part){
                 const next=transformSystem(this.game!.rows,actionFor(pointer));
                 source=line.querySelector<HTMLElement>(`.sys-${pointer.side} .sys-expression`)!;sourceHTML=source.innerHTML;
-                source.innerHTML=rowSides(next[pointer.row],pointer.row,false)[pointer.side==='left'?0:1];this.fitBoard?.();targetRect=line.querySelector<HTMLElement>(`.sys-${destination}`)!.getBoundingClientRect();
+                source.innerHTML=rowSides(next[pointer.row],pointer.row,false)[pointer.side==='left'?0:1];this.fitBoard?.();
             }else pointer.button.classList.add('sys-term-lifted');
             root.dataset.dragging='true';controls().forEach(el=>el.inert=true);
-            ghost=document.createElement('div');ghost.className='sys-term-ghost';ghost.dataset.part=pointer.part??'term';ghost.style.font=font;ghost.innerHTML=ghostHTML();document.body.append(ghost);draw();
+            ghost=document.createElement('div');ghost.className='sys-term-ghost';ghost.dataset.part=pointer.part??'term';ghost.style.font=font;ghost.innerHTML=ghostHTML();document.body.append(ghost);measureDrop();draw();
         };
         board.addEventListener('click',e=>{if(performance.now()<suppress){e.preventDefault();e.stopImmediatePropagation();}},{signal,capture:true});
         this.on('[data-system-term]',event=>{
@@ -219,8 +228,8 @@ export class SystemsController {
         },{signal,passive:false});
         window.addEventListener('pointerup',e=>{
             if(!pointer||pointer.id!==e.pointerId)return;clearTimeout(timer);if(!active){pointer=null;return;}
-            pointer.x=e.clientX;pointer.y=e.clientY;draw();const p=pointer,action=actionFor(p),preview=!!source;
-            const valid=crossed&&!!targetRect&&e.clientX>=targetRect.left&&e.clientX<=targetRect.right&&e.clientY>=targetRect.top&&e.clientY<=targetRect.bottom;
+            pointer.x=e.clientX;pointer.y=e.clientY;measureDrop();draw();const p=pointer,action=actionFor(p),preview=!!source;
+            const valid=isOverDrop();
             const picked=p.part&&p.held&&Math.hypot(p.x-p.startX,p.y-p.startY)<6;
             suppress=performance.now()+550;cleanup();
             if(valid)this.act(action);

@@ -29,12 +29,7 @@ async function act(action){
  else if(action.kind==='substitute'){await variable(action.row,action.variable);await page.locator(`[data-substitute="${action.variable}"]`).click();}
  else throw Error('Automatic isolation must never be exposed.');
  await page.waitForFunction(()=>!document.querySelector('.sys-modal'));
- // Older setup sequences use a constant transposition. Perform the now-explicit
- // arithmetic through the same two-term selection offered to the player.
- if(action.kind==='move'&&(await saved()).active.events.at(-1)?.kind==='written-move'){
-  const side=action.side==='left'?'right':'left',constants=page.locator(`[data-system-row="${action.row}"] .sys-${side} [data-system-term="constant"]`);
-  if(await constants.count()>1){const terms=await constants.evaluateAll(es=>es.map(e=>e.dataset.writtenTerm));for(const term of terms)await page.locator(`[data-system-row="${action.row}"] [data-side="${side}"][data-written-term="${term}"]`).click();await page.locator('#sys-merge').click();}
- }
+
 }
 
 async function geometry(label){
@@ -109,6 +104,46 @@ try{
  checks.push({test:'Substitution keeps groups, repetitions and both sides; expand then select/fuse are separate player actions; source, reload and undo preserved',passed:true});
  await open('s1');await act({kind:'scale',row:0,operation:'multiply',operand:'2',factor:'2'});await act({kind:'add',source:0,target:1});await act({kind:'scale',row:0,operation:'divide',operand:'2',factor:'1/2'});await act({kind:'substitute',row:0,variable:0});assert.match(await page.locator('[data-system-row="1"] .sys-equation').getAttribute('aria-label'),/3 × 2 \+ y = 9/);await act({kind:'expand',row:1,side:'left',term:0});assert.match(await page.locator('[data-system-row="1"] .sys-equation').getAttribute('aria-label'),/6 \+ y = 9/);
  checks.push({test:'Replacing a numerical value also leaves 3×2 visible until the player calculates it',passed:true});
+ // A whole member is a drop target, including its padding and the space next to =.
+ await open('s6');for(const event of plans.find(p=>p.id==='s6').events)await act(event);
+ assert.match(await page.locator('[data-system-row="0"] .sys-equation').getAttribute('aria-label'),/x = 1/);
+ await act({kind:'scale',row:0,operation:'multiply',operand:'5',factor:'5'});await variable(0,0);await page.locator('#sys-offset-value').fill('-3');await page.locator('[data-offset="add"]').click();
+ if(await page.locator('[data-system-row="0"] .sys-right [data-system-term="constant"]').count()>1)await act({kind:'merge',row:0,side:'right',terms:[0,1]});
+ const example=await page.locator('[data-system-row="0"] .sys-equation').getAttribute('aria-label');assert.match(example,/5x − 3 = 2/);
+ const other=await page.locator('[data-system-row="1"] .sys-equation').getAttribute('aria-label');
+ await cdp.send('Emulation.setCPUThrottlingRate',{rate:6});
+ const sendDrag=async(selector,point,touch=false,beforeRelease)=>{
+  const start=await centre(selector);
+  if(touch){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[start]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:start.x+10,y:start.y}]});}
+  else{await page.mouse.move(start.x,start.y);await page.mouse.down();await page.mouse.move(start.x+10,start.y);}
+  await page.locator('.sys-term-ghost').waitFor();
+  if(touch)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[point]});else await page.mouse.move(point.x,point.y,{steps:4});
+  if(beforeRelease)await beforeRelease();
+  if(touch)await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});else await page.mouse.up();
+  await page.waitForFunction(()=>!document.querySelector('.sys-term-ghost'));
+ };
+ for(const size of [{width:320,height:480},{width:390,height:844},{width:1280,height:800}]){
+  await page.setViewportSize(size);await page.locator('#sys-board').scrollIntoViewIfNeeded();
+  for(const touch of [false,true])for(const position of ['near-equal','top','bottom','far-edge','other-line','outside-board','left']){
+   await page.locator('#sys-board').scrollIntoViewIfNeeded();
+   const line=await box('[data-system-row="0"]'),eq=await box('[data-system-row="0"] .sys-equal'),side=await box('[data-system-row="0"] .sys-right'),next=await box('[data-system-row="1"]'),boundary=eq.x+eq.width/2;
+   const p=position==='near-equal'?{x:boundary+2,y:line.y+line.height/2}:position==='top'?{x:side.x+side.width/2,y:line.y+3}:position==='bottom'?{x:side.x+side.width/2,y:line.y+line.height-3}:position==='far-edge'?{x:line.x+line.width-3,y:line.y+line.height/2}:position==='other-line'?{x:side.x+side.width/2,y:next.y+next.height/2}:position==='outside-board'?{x:line.x+line.width+25,y:line.y+line.height/2}:{x:boundary-2,y:line.y+3};
+   const invalid=position==='other-line'||position==='outside-board',left=position==='left',count=(await saved()).active.events.length;
+   if(['near-equal','top','bottom'].includes(position))assert.ok(p.x<side.x||p.y<side.y||p.y>side.y+side.height,'This point was rejected by the old text-only target');
+   try{await sendDrag(`[data-system-row="0"] [data-system-term="constant"][data-side="${left?'right':'left'}"]`,p,touch,async()=>{
+    if(!invalid){await page.locator('[data-system-row="0"].sys-drop-over').waitFor();if(position==='top'&&!touch&&size.width===390)await page.screenshot({path:'test-results/systems-wide-drop-active.png',fullPage:true});}
+   });}catch(e){await page.screenshot({path:'test-results/systems-drop-failure.png',fullPage:true});await writeFile('test-results/systems-drop-failure.json',JSON.stringify({size,touch,position,p,state:await page.locator('.sys-game').innerText()},null,2));throw e;}
+   assert.equal((await saved()).active.events.length,count+(invalid?0:1));
+   assert.equal(await page.locator('[data-system-row="1"] .sys-equation').getAttribute('aria-label'),other);
+   assert.equal(await page.locator('[data-system-row="0"] .sys-equation').getAttribute('aria-label'),invalid?example:left?'Ligne 1 : 5x − 5 = 0':'Ligne 1 : 5x = 5');
+   if(!invalid){await page.locator('#sys-undo').click();assert.equal(await page.locator('[data-system-row="0"] .sys-equation').getAttribute('aria-label'),example);}
+  }
+  checks.push({test:`${size.width}×${size.height}, CPU ×6: mouse and touch deposits next to =, above/below characters, far edge, left member; automatic fusion; other-row/outside cancellation`,passed:true});
+ }
+ await cdp.send('Emulation.setCPUThrottlingRate',{rate:1});
+ await page.setViewportSize({width:390,height:844});await page.locator('#sys-board').scrollIntoViewIfNeeded();await beginFactor('[data-system-row="0"] [data-system-term="0"][data-side="left"]');const factorRow=await box('[data-system-row="0"]'),factorEqual=await box('[data-system-row="0"] .sys-equal');await page.mouse.move(factorEqual.x+factorEqual.width/2+2,factorRow.y+3);await page.locator('[data-system-row="0"].sys-drop-over').waitFor();await page.mouse.up();assert.match(await page.locator('[data-system-row="0"] .sys-equation').getAttribute('aria-label'),/x − 3\/5 = 2\/5/);await page.locator('#sys-undo').click();await page.reload();await page.locator('#sys-resume').click();assert.equal(await page.locator('[data-system-row="0"] .sys-equation').getAttribute('aria-label'),example);
+ await sendDrag('[data-system-row="0"] [data-system-term="constant"][data-side="left"]',await centre('[data-system-row="0"] .sys-right'));await page.screenshot({path:'test-results/systems-auto-fusion.png',fullPage:true});assert.equal(await page.locator('[data-system-row="0"] .sys-equation').getAttribute('aria-label'),'Ligne 1 : 5x = 5');
+ checks.push({test:'Coefficient drops share expanded target; cancelled/undone movements replay correctly; 5x−3=2 becomes 5x=5 in one move',passed:true});
  // Optional explanatory preview, with one action counted only after confirmation.
  await page.locator('[data-screen="settings"]:visible').first().click();await page.locator('[data-pref="explainSteps"]').check();await page.locator('#back-systems').click();await open('s3');await page.locator('[data-system-row="0"] [data-system-term="1"][data-side="left"]').click();await page.locator('#sys-move-term').click();assert.ok(await page.locator('#sys-confirm-action').isVisible());assert.equal((await saved()).active.moves,0);await page.locator('#sys-confirm-action').click();assert.equal((await saved()).active.moves,1);await page.locator('[data-screen="settings"]:visible').first().click();await page.locator('[data-pref="explainSteps"]').uncheck();await page.locator('#back-systems').click();checks.push({test:'Explain-each-step preference respected without extra moves',passed:true});
  await open('s3');const session=await context.newCDPSession(page);await session.send('Emulation.setCPUThrottlingRate',{rate:6});const timings=[];for(let i=0;i<30;i++){timings.push(await page.evaluate(async()=>{const t=performance.now();document.querySelector('[data-system-row="0"] [data-variable="0"]').click();await new Promise(requestAnimationFrame);return performance.now()-t;}));}timings.sort((a,b)=>a-b);await session.send('Emulation.setCPUThrottlingRate',{rate:1});checks.push({test:'CPU ×6, 30 variable selections to next frame',medianMs:timings[15],p95Ms:timings[28],maxMs:timings[29]});

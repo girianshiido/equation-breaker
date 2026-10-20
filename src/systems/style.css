@@ -153,3 +153,8 @@ button.sys-term { padding-inline:0; }
 .sys-sign.sys-binary-sign { padding-inline:.2em; }
 .sys-sign.sys-unary-sign:not(:empty) { padding-right:.04em; }
 .sys-term-selected { box-shadow:inset 0 -2px #8cebd0; background:#8cebd00d; }
+
+.sys-line[data-drop-side]::after { content:''; position:absolute; top:0; bottom:0; pointer-events:none; border:1px dashed #8cebd052; border-radius:12px; background:#8cebd006; }
+.sys-line[data-drop-side=right]::after { left:var(--sys-drop-split); right:0; }
+.sys-line[data-drop-side=left]::after { left:0; right:calc(100% - var(--sys-drop-split)); }
+.sys-line.sys-drop-over::after { border-color:#8cebd0b0; background:#8cebd014; }

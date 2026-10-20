@@ -22,6 +22,17 @@ export function simpleTerm(e:LinearExpr):{q:Rational;variable:number|null}|null{
  if(e.kind==='constant')return {q:e.value,variable:null};if(e.kind==='variable')return {q:rat(1),variable:e.variable};
  if(e.kind==='scale'&&e.body.kind==='variable')return {q:e.factor,variable:e.body.variable};return null;
 }
+/** A deliberate transposition combines its arriving monomial, without opening groups. */
+export function mergeArrival(destination:LinearExpr,arrival:LinearExpr):LinearExpr{
+ const incoming=simpleTerm(arrival),terms=expressionTerms(destination);
+ if(!incoming)return expressionSum([...terms,arrival]);
+ let first=-1,q=incoming.q;
+ const kept=terms.flatMap((term,i)=>{const value=simpleTerm(term);if(!value||value.variable!==incoming.variable)return [term];if(first<0)first=i;q=add(q,value.q);return [];});
+ const merged=incoming.variable===null?constant(q):scaled(q,variable(incoming.variable));
+ if(first<0)return expressionSum([...terms,arrival]);
+ // Retain the order of all unrelated terms, including pending substitutions.
+ kept.splice(first,0,merged);return expressionSum(kept);
+}
 export function scaleExpression(e:LinearExpr,q:Rational):LinearExpr{
  // Scaling an equation changes outer coefficients without opening parentheses.
  return expressionSum(expressionTerms(e).map(t=>t.kind==='constant'?constant(mul(t.value,q)):t.kind==='scale'?scaled(mul(t.factor,q),t.body):scaled(q,t)));
