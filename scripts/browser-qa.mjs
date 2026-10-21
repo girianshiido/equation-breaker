@@ -142,7 +142,7 @@ try {
     const fractionLayout=await page.locator('.scalar-fraction').first().evaluate(f=>{const r=f.getBoundingClientRect(),n=f.children[0].getBoundingClientRect(),d=f.children[1].getBoundingClientRect();return {font:getComputedStyle(f).fontSize,base:getComputedStyle(f.closest('.math-group-content')).fontSize,numerator:getComputedStyle(f.children[0]).fontSize,denominator:getComputedStyle(f.children[1]).fontSize,axis:r.top+r.height/2,centres:(n.top+n.height/2+d.top+d.height/2)/2};});
     assert.equal(fractionLayout.font,fractionLayout.base);assert.equal(fractionLayout.numerator,fractionLayout.base);assert.equal(fractionLayout.denominator,fractionLayout.base);assert.ok(Math.abs(fractionLayout.axis-fractionLayout.centres)<1);
     await page.screenshot({path:'test-results/tall-square-parentheses.png'});
-    await page.reload();await page.locator('#resume').click();assert.equal(await page.locator('#moves').innerText(),'1');
+    await page.reload();await page.locator('.brand').click();await page.locator('#resume').click();assert.equal(await page.locator('#moves').innerText(),'1');
     await nav('settings');assert.equal(await page.locator('[data-pref="explainSteps"]').isChecked(),false);await page.locator('[data-pref="explainSteps"]').check();await page.locator('#back-game').click();
     await page.locator('#undo').click();await select('l.0');await select('l.1');await page.locator('#complete-square').click();
     assert.equal(await page.locator('#dialog').evaluate(el=>el.open),true);assert.equal(await page.locator('#moves').innerText(),'1');await page.locator('#cancel-preview').click();
@@ -159,7 +159,7 @@ try {
     for(let i=1;i<=8;i++)await touchSession.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:start.x+(end.x-start.x)*i/8,y:start.y+(end.y-start.y)*i/8}]});
     await touchSession.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForFunction(()=>document.querySelector('.game')?.getAttribute('aria-busy')==='false');
     assert.equal(await page.locator('.right-plate [data-node]').getAttribute('aria-label'),'−1/2, membre droit');
-    await page.reload();await page.locator('#resume').click();assert.equal(await page.locator('.right-plate [data-node]').getAttribute('aria-label'),'−1/2, membre droit');
+    await page.reload();await page.locator('.brand').click();await page.locator('#resume').click();assert.equal(await page.locator('.right-plate [data-node]').getAttribute('aria-label'),'−1/2, membre droit');
     report.push({test:'Real touch division by an exact radical coefficient at 320×568, followed by recovery',passed:true});
     // Responsive arena, including the longest expressions and large-text accessibility mode.
     for (const size of [{ width: 320, height: 568 }, { width: 360, height: 640 }, { width: 390, height: 844 }, { width: 430, height: 932 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }, { width: 844, height: 390 }]) {
@@ -185,6 +185,7 @@ try {
     assert.match(await page.locator('#arena').innerText(), /3/);
     await act(plans[0].events[0]);
     await page.reload();
+    await page.locator('.brand').click();
     await page.locator('#resume').click();
     assert.match(await page.locator('#arena').innerText(), /5/);
     await page.locator('#validate').click();
@@ -222,6 +223,7 @@ try {
     report.push({ test: 'CPU ×6, 30 selections to next frame', medianMs: sorted[15], p95Ms: sorted[28], maxMs: sorted.at(-1) });
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
     // Complete cache and offline reload: actual service worker, no mocked requests.
+    await page.locator('.brand').click();
     await page.evaluate(async () => { await navigator.serviceWorker.ready; });
     await page.reload();
     await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
@@ -231,7 +233,7 @@ try {
     await context.setOffline(true);
     await page.reload();
     await page.waitForSelector('#play');
-    await page.locator('#play').click();
+    await openLevel(plans[0]);
     await act(plans[0].events[0]);
     await page.locator('#validate').click();
     assert.ok(await page.locator('.result-screen').isVisible());

@@ -1,5 +1,5 @@
 import type { Save } from '../app/persistence';
-import { campaign } from '../levels/campaign';
+import { campaignStages, stageResult } from '../levels/progression';
 export const badges = (s: Save) => [
     ['⚖', 'Premier équilibre', Number(!!s.results['w1-1']), 1, 'Terminer le premier niveau'],
     ['◇', 'Sans trembler', s.stats.clean, 10, 'Réussites sans transformation interdite'],
@@ -12,5 +12,5 @@ export const badges = (s: Save) => [
     ['⋈', 'Produit fatal', s.stats.products, 25, 'Équations produits nuls résolues'],
     ['½', 'Maître des fractions', s.stats.fractions, 30, 'Équations du monde 4 sans indice'],
     ['²', 'Bâtisseur de carrés', s.stats.quadratics, 30, 'Équations du second degré résolues'],
-    ['✦', 'Équilibriste suprême', campaign.filter(l => s.results[l.id]?.stars === 3).length, campaign.length, 'Trois étoiles sur toute la campagne']
+    ['✦', 'Équilibriste suprême', campaignStages.filter(l => stageResult(s,l)?.stars === 3).length, campaignStages.length, 'Trois étoiles sur toute la campagne']
 ].map(([symbol, name, value, target, description]) => ({ symbol: String(symbol), name: String(name), value: Number(value), target: Number(target), description: String(description) }));

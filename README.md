@@ -7,7 +7,7 @@
 
 ## Contenu disponible
 
-72 niveaux d’équations fixes, 12 par monde, avec découverte, autonomie et transfert ; générateur reproductible pour chaque monde ; campagne progressive ; entraînement ciblé ; séries arcade de cinq équations avec chrono facultatif. Aucune contrainte de temps en campagne. Le mode **Systèmes** ajoute **30 niveaux** répartis en deux mondes : 21 systèmes 2 × 2 puis 9 systèmes 3 × 3, soit **102 niveaux fixes au total**.
+72 niveaux d’équations fixes, 12 par monde, avec découverte, autonomie et transfert ; générateur reproductible pour chaque monde ; campagne progressive ; entraînement ciblé ; séries arcade de cinq équations avec chrono facultatif. Aucune contrainte de temps en campagne. La même campagne se poursuit avec **21 systèmes 2 × 2**, **21 systèmes 3 × 3**, puis **12 systèmes du second degré en x et y** : **9 mondes, 126 niveaux fixes et 378 étoiles**. Chaque niveau exige la réussite de tous les précédents, y compris entre mondes.
 
 | Monde | Compétences et cas couverts |
 | --- | --- |
@@ -17,6 +17,9 @@
 | Fraction Lab | Coefficients rationnels exacts, dénominateurs constants, groupes fractionnés |
 | Zero Product | Facteur commun choisi, carrés préparés et différence de carrés, produit nul et union sans doublon |
 | Quadratic Core | Complétion du carré avec compensation, identités choisies, racines rationnelles ou irrationnelles manipulables |
+| Systèmes 2 × 2 | Substitution, combinaison, libre choix, fractions et termes dans les deux membres |
+| Systèmes 3 × 3 | 21 niveaux, substitutions multiples et éliminations successives |
+| Intersections | 12 systèmes du second degré en x et y, entièrement algébriques |
 
 Douze succès, étoiles, records, indicateurs de maîtrise par compétence et apparences déblocables. Sept bruitages mélodieux originaux en OGG/Opus, avec repli MP3, animations courtes, contraste renforcé, texte agrandi et mode léger. Pas de compte, publicité, serveur, CDN ou télémétrie.
 
@@ -67,7 +70,7 @@ Un carré nul ne crée qu’un cas : `(x−2)² = 0 ⇔ x−2 = 0`. Les facteurs
 
 ### Mode Systèmes
 
-Accessible depuis la carte **Systèmes** de l’accueil, la navigation ou [le lien direct](https://girianshiido.github.io/equation-breaker/#systems). La progression se débloque niveau par niveau : un premier monde exclusivement 2 × 2 (substitution, combinaison, choix de méthode, puis fractions et termes sur les deux membres), puis un monde exclusivement 3 × 3. Chaque monde possède sa carte et ses compteurs. Le second s’ouvre après le dernier niveau du premier. Les niveaux 3 × 3 déjà réussis restent accessibles. La progression Systèmes possède ses propres étoiles et sa partie en cours, indépendantes des six mondes d’équations.
+Les systèmes occupent les mondes 7 et 8 de la carte commune : 21 niveaux 2 × 2, puis 21 niveaux 3 × 3. Le monde 7 s’ouvre après les 72 équations, et le monde 8 après les 21 systèmes 2 × 2. Le lien historique `#systems` respecte ces mêmes prérequis. Les anciennes étoiles sont conservées, même si un niveau ajouté doit être terminé avant de pouvoir poursuivre. Le bouton Continuer et les compteurs couvrent toute la campagne.
 
 - **Méthode imposée pendant l’apprentissage** : les chapitres Substitution masquent les points de lignes, la molette et l’addition de lignes. On isole les inconnues par les gestes usuels (déplacements, prises de coefficients, × (−1), opérations numériques aux deux membres), puis on substitue. Les chapitres Combinaison gardent points, molette et addition, mais ne proposent aucune substitution. Les niveaux Choix de méthode et Fractions et deux membres autorisent les deux approches. Ces règles valent aussi pour le monde 3 × 3 et les indices ; les historiques plus anciens restent rejouables.
 - **Toucher le point d’une ligne** affiche une petite roue dentée directement dans le cadre. Tourner la roue modifie immédiatement les deux membres de cette ligne, tels qu’ils sont écrits ; relâcher valide une opération. Échap annule l’aperçu. Le sélecteur discret **× / ÷** conserve le choix. Les opérandes sont des entiers : **0 et 1 sont exclus**, les négatifs sont autorisés. Pour × 1/2 ou × (−1/2), choisir ÷ 2 ou ÷ (−2). Le champ à côté de la roue permet aussi une saisie au clavier, validée par Entrée.
@@ -80,6 +83,14 @@ Accessible depuis la carte **Systèmes** de l’accueil, la navigation ou [le li
 - Annulation, étapes, indices, étoiles, explications facultatives, sons, reprise, export/import et hors ligne sont disponibles. Les indices décrivent un geste et ne l’appliquent pas. Lâcher hors d’une cible, Échap, un second doigt, le redimensionnement et la mise en arrière-plan annulent les déplacements sans changer le système.
 
 Les couples solutions sont variés : (2 ; 3) est réservé au premier niveau. Valeurs négatives, nulles et fractions réduites apparaissent ensuite. Trois niveaux 2 × 2 conservent volontairement des termes des deux côtés, par exemple **x/3 + 2 = y/4 − 1/3**. Une révision du contenu ne réinterprète pas les parties en cours : leur équation de départ et leur historique restent ceux de la version commencée ; les étoiles restent acquises. Rejouer utilise la nouvelle équation.
+
+### Systèmes du second degré — monde 9
+
+Le premier niveau cherche les intersections du cercle **x² + y² = 5** et de la droite **y − x = −1**. Le joueur isole une inconnue, la substitue, développe et fusionne, puis résout l’équation obtenue avec les mêmes outils manuels que dans les mondes précédents. Chaque valeur ouvre le calcul de l’autre coordonnée ; les couples sont réunis et vérifiés exactement dans les deux équations d’origine.
+
+Les douze niveaux comprennent cercle-droite, parabole-droite, deux cercles, tangences, absence d’intersection réelle, hyperbole, ellipse, deux paraboles et un cas à quatre points. Aucun tracé n’est affiché. Les racines et fractions restent exactes. L’écriture substituée reste visible avant développement ; les identités et la complétion du carré restent des choix du joueur. Les accolades et parenthèses s’étirent, et les ensembles de quatre couples passent sur deux lignes sur téléphone.
+
+Le monde se débloque après tous les niveaux 3 × 3. Les manipulations et les résolutions de coordonnées sont sauvegardées par rejeu, y compris une équation du second degré encore en cours.
 
 ### Étoiles
 
@@ -119,8 +130,10 @@ BASE_PATH=/equation-breaker/ pnpm build
 - `src/math/transformations.ts` : règles locales et préconditions, sans déplacement magique de terme. Chaque transformation est vérifiée par proportionnalité non nulle du polynôme différence.
 - `src/math/solve.ts` : résolution exacte dans ℝ, ensembles vide/universel/fini et radicaux symboliques. Les polynômes quadratiques sont rendus moniques en interne pour identifier les mêmes solutions après changement d’échelle.
 - `src/levels/` : campagne et générateur à graines. Les résultats attendus de génération sont construits à partir des racines et contrôlés par le solveur.
-- `src/systems/` : moteur linéaire exact, expressions écrites conservant groupes et occurrences, 30 niveaux en deux mondes, gestes de termes et de ligne, molette, substitution multiple et sauvegardes.
-- `src/gameplay/` : états, branches, validation, scores, indices et succès.
+- `src/systems/` : moteur linéaire exact, expressions écrites conservant groupes et occurrences, 42 niveaux en deux mondes, gestes de termes et de ligne, molette, substitution multiple et sauvegardes.
+- `src/curves/` : 12 systèmes quadratiques, substitutions littérales, réduction à une inconnue et vérification exacte des couples.
+- `src/levels/progression.ts` : ordre commun des 126 niveaux, prérequis, étoiles et reprise.
+- `src/gameplay/` : états, branches, validation, scores, indices, succès et sérialisation des événements.
 - `src/app/persistence.ts` : schéma versionné, validation, bornage, reprise par rejeu des événements ; sérialisation des opérandes exacts sans `bigint` brut.
 - `src/ui/` et `src/main.ts` : présentation, navigation interne sans dépendance aux réécritures du serveur, événements, audio facultatif.
 
@@ -151,9 +164,13 @@ pnpm qa:polish
 pnpm qa:audio
 pnpm qa:mobile
 pnpm qa:systems
+pnpm qa:system-worlds
+pnpm qa:system-methods
+pnpm qa:curves
+pnpm qa:curve-gestures
 ```
 
-Les tests Vitest couvrent aussi les 30 systèmes résolus, les substitutions multiples, les combinaisons exactes et la reprise des nouveaux profils. Ils couvrent les cas mathématiques de référence, les 72 résolutions complètes, 1 800 niveaux générés résolus, 1 200 transformations d’équivalence, les opérations interdites, l’annulation et la reconstruction des branches sauvegardées. Le scénario navigateur utilise uniquement les boutons réels : aucune commande de résolution n’est exposée par l’application.
+Les tests Vitest couvrent aussi les 42 systèmes linéaires et les 12 systèmes quadratiques résolus, les substitutions multiples, les combinaisons exactes et la reprise des nouveaux profils. Ils couvrent les cas mathématiques de référence, les 72 résolutions complètes, 1 800 niveaux générés résolus, 1 200 transformations d’équivalence, les opérations interdites, l’annulation et la reconstruction des branches sauvegardées. Le scénario navigateur utilise uniquement les boutons réels : aucune commande de résolution n’est exposée par l’application.
 
 Les scripts de régression navigateur utilisent Chrome installé sur macOS à son emplacement habituel. Adapter `executablePath` dans `scripts/browser-qa.mjs` pour un autre environnement. Les résultats détaillés et captures sont produits dans `test-results/` (exclus du dépôt). Voir [VALIDATION.md](VALIDATION.md) pour les mesures et la portée effective des essais.
 
@@ -181,8 +198,9 @@ Le script de vérification publique compare les SHA-256 de chaque fichier servi 
 
 ## Limites et évolutions
 
+- Les systèmes quadratiques proposés se ramènent à des équations de degré au plus 2 ; le jeu ne propose pas de résolution générale des quartiques.
 - Les statistiques pédagogiques sont des indicateurs d’usage local, pas une évaluation scolaire certifiée ni un classement mondial.
 - Les essais mobiles utilisent les dimensions tactiles et le ralentissement CPU d’un navigateur de bureau. Ils ne remplacent pas une séance sur des appareils Android modestes et iOS réels.
 - Les identifiants de sélection sont des chemins dans l’AST. Une transformation efface la sélection et verrouille brièvement les entrées pour éviter les références périmées et les doubles applications.
 - Les identités proposées portent sur les expressions réelles de degré au plus 2, avec coefficients rationnels au départ. Les champs de racines sont bornés à 16 composantes pour préserver la réactivité. Les anciennes actions de factorisation globale et de discriminant restent lisibles uniquement pour rejouer les sauvegardes précédentes.
-- Les 72 niveaux d’équations et les 30 systèmes constituent deux progressions complètes et finies ; davantage de séquences écrites, une révision espacée adaptative, le défi quotidien et un mode enseignant sont des évolutions distinctes, non annoncées comme présentes.
+- Les 126 niveaux constituent une campagne commune complète et finie ; davantage de séquences écrites, une révision espacée adaptative, le défi quotidien et un mode enseignant sont des évolutions distinctes, non annoncées comme présentes.

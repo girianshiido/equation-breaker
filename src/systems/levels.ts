@@ -48,5 +48,21 @@ systemLevels.push(
  {id:'s29',title:'Des dénominateurs à dompter',method:'choice',world:2,revision:1,chapter:'Fractions et deux membres',budget:30,tip:'La molette peut éliminer un dénominateur en multipliant toute une ligne.',rows:[sides(['1/2','0'],'-1',['0','1/3'],'-1'),sides(['0','1/2'],'1/4',['1','0'],'3/4')]},
  {id:'s30',title:'Le passage aux trois inconnues',method:'choice',world:2,revision:1,chapter:'Fractions et deux membres',budget:32,tip:'Choisis ta méthode : les deux membres contiennent des fractions et des constantes.',rows:[sides(['1/3','0'],'1/2',['0','1/2'],'1/3'),sides(['0','1/4'],'-1/6',['1/2','0'],'-1/6')]}
 );
-systemLevels.sort((a,b)=>a.world-b.world); // Stable IDs preserve stars; the 2×2 world is completed first.
+const extraThree:[string,SystemLevel['method'],number[][],string][]=[
+ ['Le relais négatif','substitution',[[0,1,0,-2],[1,1,0,1],[1,0,1,-1]],'Une valeur négative se remplace avec son signe.'],
+ ['Une expression à deux reprises','substitution',[[1,-2,0,1],[0,1,1,-3],[2,-1,1,-3]],'La même expression remplace x dans les deux autres lignes.'],
+ ['Trois coordonnées fractionnaires','substitution',[[1,1,0,0],[0,1,1,1],[2,-1,1,3]],'Conserve les fractions exactes pendant les remplacements.'],
+ ['La coordonnée nulle','substitution',[[1,-1,0,-2],[0,1,-1,3],[2,1,1,1]],'Zéro est une valeur comme une autre.'],
+ ['Les signes en miroir','combination',[[1,1,1,2],[1,-1,1,0],[1,1,-1,-4]],'Prépare les opposés pour éliminer une inconnue.'],
+ ['Les coefficients se répondent','combination',[[2,3,-1,1],[4,-3,1,11],[1,1,1,1]],'Une addition peut faire disparaître deux inconnues.'],
+ ['Trois préparations','combination',[[1,2,1,-2],[2,-1,-1,-3],[3,1,-2,-11]],'Combine les lignes sans changer leurs solutions.'],
+ ['Les quarts au rendez-vous','combination',[[2,-2,0,2],[0,2,4,0],[2,0,-4,0]],'Les mêmes gestes conduisent à des fractions réduites.'],
+ ['Le choix des opposés','choice',[[2,1,-1,-8],[1,-2,1,-1],[3,1,2,-5]],'Choisis les coefficients les plus commodes.'],
+ ['Une contradiction cachée','choice',[[1,-2,1,1],[2,-4,2,3],[1,1,1,0]],'Cherche une égalité impossible.'],
+ ['Trois lignes, deux informations','choice',[[1,1,1,2],[2,-1,1,3],[3,0,2,5]],'Une ligne peut dépendre des deux autres.'],
+ ['Le dernier triplet exact','choice',[[2,1,1,0],[2,-4,2,-1],[2,2,-4,-3]],'Les trois coordonnées sont des fractions exactes.']
+];
+extraThree.forEach(([title,method,values,tip],i)=>systemLevels.push({id:`s${31+i}`,title,method,world:3,revision:1,chapter:method==='substitution'?'Substitution':method==='combination'?'Combinaison':'Choix de méthode',rows:makeRows(values),budget:80,tip}));
+const chapters=['Substitution','Combinaison','Choix de méthode','Fractions et deux membres'];
+systemLevels.sort((a,b)=>a.world-b.world||chapters.indexOf(a.chapter)-chapters.indexOf(b.chapter)); // Stable IDs preserve stars; the 2×2 world is completed first.
 export function systemInitialRows(level:SystemLevel,revision=level.revision):Row[]{return revision===1&&previousRows[level.id]?makeRows(previousRows[level.id]):level.rows;}

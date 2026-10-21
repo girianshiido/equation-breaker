@@ -9,6 +9,7 @@ import { format } from '../math/format';
 export interface PickedGrip { id: string; part: Exclude<Grip, 'term'> }
 interface Options {
     equation: Equation;
+    variableName?:'x'|'y';
     picked: PickedGrip | null;
     allowed: () => boolean;
     motion: () => boolean;
@@ -29,6 +30,9 @@ document.addEventListener('click', event => {
     }
 }, true);
 export function bindGestures(arena: HTMLElement, options: Options): () => void {
+    const aliasHTML=(html:string)=>{if(options.variableName!=='y')return html;const template=document.createElement('template');template.innerHTML=html;const walker=document.createTreeWalker(template.content,NodeFilter.SHOW_TEXT);let node:Node|null;while(node=walker.nextNode())if(node.textContent)node.textContent=node.textContent.replace(/(^|[^A-Za-zÀ-ÿ])x(?![A-Za-zÀ-ÿ])/g,'$1y');return template.innerHTML;};
+    const showBlocks=(...args:Parameters<typeof blocks>)=>aliasHTML(blocks(...args));
+    const showMath=(...args:Parameters<typeof math>)=>aliasHTML(math(...args));
     const signal = new AbortController();
     let pointer: { id: number; node: string; part: Grip; x: number; y: number; startX: number; startY: number; moved: boolean } | null = null;
     let rangeIds: string[] | null = null;
@@ -72,7 +76,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         pointer.part = part; arena.setPointerCapture(pointer.id); clearHold(); suppressClickUntil = performance.now() + 1000;
         setLocked(true); arena.classList.add('in-transit');
         const source = plan.source === 'l' ? left : right;
-        source.innerHTML = blocks(plan.inFlightSource, plan.source, [], []);
+        source.innerHTML = showBlocks(plan.inFlightSource, plan.source, [], []);
         equal.innerHTML = '<span class="equal-suspended">⋯</span>'; equal.setAttribute('aria-label', 'Transformation en cours : égalité suspendue');
         options.onLayout();
         const dest = arena.querySelector<HTMLElement>(plan.destination === 'l' ? '.left-plate' : '.right-plate')!;
@@ -103,7 +107,7 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         const nextCrossed = forward ? coordinate >= boundary : coordinate <= boundary;
         if (ghost.innerHTML === '' || nextCrossed !== crossed) {
             if (nextCrossed && !crossed) options.onSound('cross');
-            crossed = nextCrossed; ghost.innerHTML = math(crossed ? plan.arrived : plan.carried);
+            crossed = nextCrossed; ghost.innerHTML = showMath(crossed ? plan.arrived : plan.carried);
             ghost.classList.toggle('changed-sign', crossed && plan.action.part === 'term');
         }
         ghost.style.transform = `translate3d(${pointer.x}px,${pointer.y - 30}px,0) translate(-50%,-50%)`;
@@ -159,8 +163,8 @@ export function bindGestures(arena: HTMLElement, options: Options): () => void {
         options.onSound('drop');
         finishing = true; const committed = plan; releaseCapture();
         ghost?.remove(); ghost = null; arena.classList.remove('in-transit'); arena.classList.add('landing');
-        left.innerHTML = blocks(committed.landing.left, 'l', [], [], committed.destination === 'l');
-        right.innerHTML = blocks(committed.landing.right, 'r', [], [], committed.destination === 'r');
+        left.innerHTML = showBlocks(committed.landing.left, 'l', [], [], committed.destination === 'l');
+        right.innerHTML = showBlocks(committed.landing.right, 'r', [], [], committed.destination === 'r');
         equal.innerHTML = '='; equal.setAttribute('aria-label', 'égal à');
         options.onLayout();
         caption.textContent = `${committed.mirror} sur les deux membres · réduction`;

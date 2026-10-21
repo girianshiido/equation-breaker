@@ -1,3 +1,38 @@
+# Validation — Equation Breaker 2.0.0
+
+Vérifications du 21 octobre 2026, sur macOS avec Node 24 et Chrome sans fenêtre, dans des profils de test temporaires indépendants de la progression de l’utilisateur.
+
+## Campagne commune et contenu
+
+- 9 mondes, 126 niveaux et 378 étoiles : 72 équations, 21 systèmes 2 × 2, 21 systèmes 3 × 3 et 12 systèmes du second degré en x et y.
+- TypeScript strict, compilation de production et **199 tests Vitest réussis**.
+- Les 42 systèmes linéaires et les 12 systèmes quadratiques sont résolus par des transformations légales ; les coordonnées sont vérifiées exactement dans les équations initiales.
+- Le premier système quadratique est l’intersection de x² + y² = 5 et y − x = −1. Les autres parcours couvrent tangences, absence d’intersection, fractions, racines irrationnelles et quatre intersections. Aucun tracé.
+- Les 9 scénarios de `system-worlds-qa.mjs` vérifient le verrouillage de tous les niveaux antérieurs, les anciens liens directs, les anciennes étoiles avec un prérequis ajouté, le bouton Continuer commun et les véritables transitions de fin de monde 6 → 7 → 8 → 9.
+- Les sauvegardes classiques et linéaires sont conservées. La nouvelle progression quadratique et une résolution de coordonnée inachevée sont restaurées par rejeu.
+
+## Parcours et affichage dans le navigateur
+
+- **85 contrôles linéaires**, dont les 42 niveaux joués avec les commandes réelles, gestes souris et tactiles, reprise, annulation et fonctionnement hors ligne (`systems-report.json`).
+- **5 scénarios de méthodes**, couvrant les 12 leçons de substitution et les 13 leçons de combinaison, puis le libre choix et les facteurs négatifs (`system-methods-report.json`).
+- **12 parcours quadratiques complets**, utilisant les déplacements, la substitution, le développement, les identités choisies et le calcul de chaque coordonnée (`curves-report.json`). Aucun bouton de résolution globale n’est exposé dans le jeu.
+- **48 contrôles classiques de régression** : premier niveau au clavier, identités, parenthèses hautes, coefficients irrationnels au toucher, préférences, reprise, erreurs, sept dimensions et résolution hors ligne (`browser-quick-report.json`). Les 72 parcours classiques complets et les 1 800 équations générées restent couverts par les tests mathématiques.
+- Le nouveau monde est vérifié en 320×480, 360×640, 390×844, 568×320 et 1280×800. Les quatre couples solutions passent sur deux lignes à 320 pixels ; accolades et parenthèses suivent leur hauteur. Captures inspectées : premier cercle-droite, résultats irrationnels, quatre points, carte commune.
+- **4 contrôles gestuels quadratiques** : aperçu du membre de départ, annulation puis nouvelle prise tactile, division au dépôt, point de ligne conservé sous le curseur et multiplicateur négatif sans masquer le système (`curves-gestures-report.json`).
+- Aucune erreur JavaScript relevée dans ces parcours.
+
+## Performance et portée
+
+- Sous ralentissement CPU ×6, 30 sélections de termes dans les systèmes linéaires : médiane **30,7 ms**, 95e percentile **31,9 ms** jusqu’à l’image suivante.
+- Nouveau monde quadratique : médiane **33,3 ms**, 95e percentile **34,7 ms** sur 30 sélections sous CPU ×6.
+- Régression classique dans les mêmes conditions : médiane **33,4 ms**, 95e percentile **35,3 ms**.
+- Code courant : environ 211 Ko JavaScript et 79 Ko CSS, soit environ **88 Ko compressés** ensemble, sans bibliothèque d’interface ni calcul symbolique permanent. Les anciens fichiers nommés par empreinte sont conservés pour les pages encore en cache, sans être précachés.
+- Les dimensions tactiles et le CPU ralenti sont ceux d’un navigateur d’ordinateur. Aucun appareil Android modeste ni Safari iOS physique n’a été testé.
+
+Les sections ci-dessous conservent les validations des versions antérieures ; leurs tailles et nombres de tests sont ceux des versions indiquées.
+
+---
+
 # Validation — Equation Breaker 1.0
 
 Vérifications réalisées le 19 octobre 2026, sur macOS, avec Node 24, TypeScript 5.9.3, Vite 7.3.7, Vitest 3.2.7 et Google Chrome piloté par Playwright.

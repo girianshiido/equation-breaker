@@ -37,4 +37,4 @@ export function decodeSystems(value:unknown):SystemsData {
     if(value.wheelMode==='divide')data.wheelMode='divide';
     const game=readSystemSnapshot(value.active);if(game)data.active=systemSnapshot(game);return data;
 }
-export function systemUnlocked(data:SystemsData,index:number):boolean { const level=systemLevels[index];if(!level)return false;return index===0||!!data.results[level.id]||!!data.results[systemLevels[index-1]?.id]||index===systemLevels.findIndex(l=>l.world===level.world)&&systemLevels.some(l=>l.world===level.world&&!!data.results[l.id]); }
+export function systemUnlocked(data:SystemsData,index:number):boolean {return Number.isInteger(index)&&index>=0&&index<systemLevels.length&&systemLevels.slice(0,index).every(l=>!!data.results[l.id]);}

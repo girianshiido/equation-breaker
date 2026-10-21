@@ -1,0 +1,15 @@
+.curve-game .curve-reductions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.curve-reductions button { min-height:44px; font-size:12px; }
+.curve-game .sys-equation sup { font-size:.6em; line-height:0; vertical-align:.6em; }
+.curve-game .sys-inline-wheel { right:65px; gap:5px; }
+.curve-game #curve-wheel-value { width:54px; min-height:38px; padding:3px; margin:0; text-align:center; font:18px var(--math-font); }
+.curve-game #curve-gear { font-size:33px; }
+.curve-game .sys-inline-wheel > button.text-button { min-width:28px; padding:3px; }
+.curve-game .sys-inline-number { gap:3px; }
+@media(max-width:480px){.curve-game .sys-inline-wheel{left:4px;gap:2px}.curve-game .sys-inline-wheel .sys-wheel-mode button{min-width:25px;width:25px}.curve-game #curve-gear{width:35px;min-width:35px}.curve-game #curve-wheel-value{width:42px}}
+
+.world-card[data-world="6"] .world-symbol,.world-card[data-world="7"] .world-symbol {font-size:19px;white-space:nowrap;}
+.world-card[data-world="8"] .world-symbol,.curve-equation .world-symbol {font-size:21px;white-space:nowrap;}
+
+.curve-points { display:inline-flex; align-items:center; gap:.2em; }
+@media(max-width:480px){.curve-points-many{display:inline-grid;grid-template-columns:repeat(2,max-content);gap:.25em .35em;}.curve-point{white-space:nowrap;}}

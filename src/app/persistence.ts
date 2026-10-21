@@ -1,5 +1,8 @@
+import { decodeCurves, freshCurves, type CurveData } from '../curves/save';
+import { eventJSON, eventRead } from '../gameplay/events';
 import { decodeSystems, freshSystems, type SystemsData } from '../systems/save';
 import { campaign } from '../levels/campaign';
+import { campaignWorldUnlocked, campaignStageUnlocked } from '../levels/progression';
 import { generated } from '../levels/generator';
 import { start, perform, type Game, type Event } from '../gameplay/game';
 import { parse } from '../math/ast';
@@ -7,6 +10,7 @@ import { format } from '../math/format';
 import { readRational, str } from '../math/rational';
 export const KEY = 'equation-breaker-v1';
 const SYSTEMS_KEY = 'equation-breaker-systems-v1';
+const CURVES_KEY='equation-breaker-curves-v1';
 export interface Result {
     stars: number;
     moves: number;
@@ -53,8 +57,9 @@ export interface Save {
     active: unknown;
     arcadeBest: number;
     systems: SystemsData;
+    curves: CurveData;
 }
-export function fresh(): Save { return { version: 1, results: {}, prefs: { sound: false, motion: !matchReduced(), contrast: false, large: false, lite: false, timer: false, memberLabels: false, explainSteps: false, theme: 'mint' }, stats: { wins: 0, clean: 0, moves: 0, errors: 0, hints: 0, expanded: 0, combined: 0, none: 0, all: 0, products: 0, fractions: 0, quadratics: 0, fast: 0, skills: Array.from({ length: 6 }, () => ({ wins: 0, errors: 0, hints: 0, transfer: 0 })) }, active: null, systems: freshSystems(), arcadeBest: 0 }; }
+export function fresh(): Save { return { version: 1, results: {}, prefs: { sound: false, motion: !matchReduced(), contrast: false, large: false, lite: false, timer: false, memberLabels: false, explainSteps: false, theme: 'mint' }, stats: { wins: 0, clean: 0, moves: 0, errors: 0, hints: 0, expanded: 0, combined: 0, none: 0, all: 0, products: 0, fractions: 0, quadratics: 0, fast: 0, skills: Array.from({ length: 6 }, () => ({ wins: 0, errors: 0, hints: 0, transfer: 0 })) }, active: null, systems: freshSystems(), curves:freshCurves(), arcadeBest: 0 }; }
 const matchReduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const object = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const count = (v: unknown, max = 1e8): number => typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : 0;
@@ -85,6 +90,7 @@ export function decode(raw: string | null): Save { const s = fresh(); if (!raw)
                     item[k] = count(value[k]); return item; });
     }
     s.systems = decodeSystems(v.systems);
+    s.curves=decodeCurves(v.curves);
     s.active = v.active ?? null;
     s.arcadeBest = count(v.arcadeBest);
     return s;
@@ -110,6 +116,7 @@ export function load(): {
     const decoded = decode(raw);
     // Older cached releases do not know this mode and may rewrite the main save.
     if(raw&&!corrupted&&!Object.hasOwn(JSON.parse(raw),'systems')){try{decoded.systems=decodeSystems(JSON.parse(localStorage.getItem(SYSTEMS_KEY)||'null'));}catch{/* Keep a playable profile when the backup is unavailable. */}}
+    if(raw&&!corrupted&&!Object.hasOwn(JSON.parse(raw),'curves')){try{decoded.curves=decodeCurves(JSON.parse(localStorage.getItem(CURVES_KEY)||'null'));}catch{}}
     return { save: decoded, warning: corrupted ? 'Sauvegarde illisible : une progression neuve a été chargée.' : '' };
 }
 catch {
@@ -118,22 +125,12 @@ catch {
 export function persist(s: Save): boolean { try {
     localStorage.setItem(KEY, JSON.stringify(s));
     try { localStorage.setItem(SYSTEMS_KEY, JSON.stringify(s.systems)); } catch { /* The primary save already contains the systems progression. */ }
+    try {localStorage.setItem(CURVES_KEY,JSON.stringify(s.curves));}catch{}
     return true;
 }
 catch {
     return false;
 } }
-function eventJSON(e: Event): unknown { if(e.kind==='complete-square')return {...e,local:e.local!==false}; if(e.kind==='square-roots')return {...e,exact:e.exact!==false}; if (e.kind === 'split') return { kind: e.kind, distinct: e.distinct !== false }; if (e.kind === 'add')
-    return { kind: e.kind, expression: format(e.expression).replaceAll('−', '-') }; if (e.kind === 'divide' || e.kind === 'multiply')
-    return { kind: e.kind, constant: str(e.constant) }; return e; }
-function eventRead(v: unknown): Event { if (!object(v))
-    throw Error('Étape invalide'); const kind = v.kind; if (kind === 'drag' && typeof v.id === 'string' && /^[lr](\.\d+)?$/.test(v.id) && ['term', 'coefficient', 'denominator', 'rational-coefficient','algebraic-coefficient'].includes(String(v.part))) return { kind, id:v.id, part:v.part as 'term'|'coefficient'|'denominator'|'rational-coefficient'|'algebraic-coefficient' }; if (kind === 'add' && typeof v.expression === 'string')
-    return { kind, expression: parse(v.expression) }; if ((kind === 'divide' || kind === 'multiply') && typeof v.constant === 'string')
-    return { kind, constant: readRational(v.constant) }; if ((kind === 'expand' || kind === 'factor' || kind === 'simplify' || kind === 'write-square') && typeof v.id === 'string' && /^[lr](\.\d+)*$/.test(v.id))
-    return { kind, id: v.id }; if ((kind === 'combine' || kind === 'complete-square' || kind==='difference-squares' || kind==='factor-common') && Array.isArray(v.ids) && v.ids.length === 2 && v.ids.every(id => typeof id === 'string' && /^[lr](\.\d+)*$/.test(id)))
-    return kind==='complete-square'?{kind,ids:v.ids as string[],local:v.local===true}:kind==='factor-common'?{kind,ids:v.ids as string[],maximal:v.maximal===true}:{kind,ids:v.ids as string[]}; if (kind === 'split') return { kind, distinct: v.distinct === true }; if(kind==='square-roots')return {kind,exact:v.exact===true}; if (['delta', 'roots', 'collect', 'confirm-branch', 'no-real'].includes(String(kind)))
-    return { kind } as Event; if (kind === 'branch' && typeof v.index === 'number' && Number.isInteger(v.index))
-    return { kind, index: v.index }; throw Error('Étape inconnue'); }
 export function snapshot(g: Game, mode: string, arcade: number, combo: number): unknown { return { level: g.level.id, world: g.level.world, seed: g.level.seed, events: g.events.map(eventJSON), completed: g.s.completed.map(s => Boolean(s)), moves: g.moves, errors: g.errors, hints: g.hints, elapsed: g.elapsed + Date.now() - g.started, mode, arcade, combo }; }
 export function restore(v: unknown): {
     game: Game;
@@ -163,5 +160,5 @@ catch {
     return null;
 } }
 import { terminal as terminalSafe, solve as solveSafe } from '../math/solve';
-export const worldUnlocked = (s: Save, w: number) => w === 0 || campaign.filter(l => l.world === w - 1).every(l => !!s.results[l.id]);
-export const levelUnlocked = (s: Save, id: string) => { const l = campaign.find(l => l.id === id); return !!l && worldUnlocked(s, l.world) && (l.index === 0 || !!s.results[`w${l.world + 1}-${l.index}`]); };
+export const worldUnlocked = (s: Save, w: number) => campaignWorldUnlocked(s,w);
+export const levelUnlocked = (s: Save, id: string) => campaign.some(l=>l.id===id)&&campaignStageUnlocked(s,id);
