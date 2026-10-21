@@ -1,6 +1,6 @@
 {
   "name": "equation-breaker",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -19,7 +19,8 @@
     "qa:system-worlds": "node scripts/system-worlds-qa.mjs",
     "qa:system-methods": "node scripts/system-methods-qa.mjs",
     "qa:curves": "node scripts/curves-qa.mjs",
-    "qa:curve-gestures": "node scripts/curves-gestures-qa.mjs"
+    "qa:curve-gestures": "node scripts/curves-gestures-qa.mjs",
+    "qa:laboratory": "node scripts/laboratory-qa.mjs"
   },
   "devDependencies": {
     "typescript": "~5.9.3",

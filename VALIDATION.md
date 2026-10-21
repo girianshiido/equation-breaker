@@ -1,3 +1,20 @@
+# Validation — Equation Breaker 2.1.0
+
+Vérifications du 21 octobre 2026, sur macOS, dans des profils temporaires isolés :
+
+- TypeScript strict, compilation et **202 tests réussis**.
+- **600 systèmes linéaires générés** résolus par des transformations proposées au joueur, incluant solutions uniques, contradictions et dépendances ; plus de 500 ensembles de solutions distincts.
+- **120 systèmes du second degré générés** résolus par les identités manuelles et les résolutions successives de coordonnées. Les douze familles, les radicaux translatés, les tangences et les quatre intersections sont couverts ; chaque couple satisfait exactement les équations initiales.
+- **7 scénarios navigateur du laboratoire réussis** : neuf cartes et prérequis, noms français, résolutions réelles 2 × 2 et 3 × 3, deux intersections générées dont une avec radicaux, reprise, nouvelle partie et retour au laboratoire. Les résultats de campagne restent identiques ; un ancien niveau est rejoué. Affichage vérifié à 320, 390, 568 et 1280 pixels (`laboratory-report.json`).
+- Les 48 contrôles classiques et les 9 scénarios de la campagne commune passent également, sans erreur JavaScript.
+- Les graines des générateurs sont versionnées dans les identifiants. Reprise par rejeu d’un système inédit et d’un brouillon de coordonnée ; contrôle des bornes des graines et des compteurs de campagne.
+- Les indices ne conseillent plus de fusion répétée lorsqu’une somme exacte de radicaux est déjà sous sa forme réduite.
+- Les noms des mondes 4, 5 et 6 sont français dans les cartes, les niveaux, le laboratoire et les statistiques.
+
+Les validations des versions précédentes sont conservées ci-dessous.
+
+---
+
 # Validation — Equation Breaker 2.0.0
 
 Vérifications du 21 octobre 2026, sur macOS avec Node 24 et Chrome sans fenêtre, dans des profils de test temporaires indépendants de la progression de l’utilisateur.

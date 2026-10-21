@@ -1,5 +1,5 @@
 /** a x² + b xy + c y² + d x + e y = f. All manipulations are algebraic and exact; no plot is displayed. */
-export interface CurveLevel {id:string;title:string;curves:[number[],number[]];names:[string,string];tip:string;expected:[string,string][];budget:number;range:number}
+export interface CurveLevel {seed?:number;template?:string;id:string;title:string;curves:[number[],number[]];names:[string,string];tip:string;expected:[string,string][];budget:number;range:number}
 const definitions:[string,[number[],number[]],[string,string],string,[string,string][]][]=[
  ['Un cercle et une droite',[[1,0,1,0,0,5],[0,0,0,-1,1,-1]],['Cercle','Droite'],'Isole y dans la droite, puis remplace y dans le cercle.',[['-1','-2'],['2','1']]],
  ['La parabole rencontre la droite',[[1,0,0,0,-1,0],[0,0,0,1,1,2]],['Parabole','Droite'],'Isole y dans une ligne, puis substitue son expression dans l’autre.',[['-2','4'],['1','1']]],

@@ -1,6 +1,6 @@
 import { makeRows, type Row } from './engine';
 import { readRational, sub } from '../math/rational';
-export interface SystemLevel { id:string; title:string; method:'substitution'|'combination'|'choice'; chapter:string; world:2|3; revision:number; rows:Row[]; budget:number; tip:string }
+export interface SystemLevel { seed?:number; id:string; title:string; method:'substitution'|'combination'|'choice'; chapter:string; world:2|3; revision:number; rows:Row[]; budget:number; tip:string }
 const definitions: [string,SystemLevel['method'],number[][],number,string][] = [
  ['Une valeur à transmettre','substitution',[[1,0,2],[1,1,5]],3,'Sélectionne x dans la première ligne, puis touche « Substituer x ».'],
  ['Le relais de y','substitution',[[0,1,3],[2,1,11]],5,'Une variable isolée peut remplacer toutes ses occurrences dans les autres équations.'],

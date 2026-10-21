@@ -192,6 +192,7 @@ export function suggestion(g: Game): { text:string; action?:Event; ids?:string[]
     }
     const lp=exactPoly(eq.left),rp=exactPoly(eq.right),quadratic=!sZero(lp[2])||!sZero(rp[2]);
     const idsFor=(side:'l'|'r',e:Expr)=>terms(e).map((_,i)=>e.kind==='sum'?`${side}.${i}`:side);
+    const usefulFusion=(ids:string[])=>{const next=transform(eq,{kind:'combine',ids}).equation;return format(next.left)!==format(eq.left)||format(next.right)!==format(eq.right);};
     if(quadratic&&g.level.world>=4&&!branches.length){
         if(!isZero(eq.right)){
             const tt=terms(eq.right),index=tt.findIndex(t=>{const m=exactMono(t);return !!m&&!sZero(m.q);});
@@ -200,7 +201,7 @@ export function suggestion(g: Game): { text:string; action?:Event; ids?:string[]
         const tt=terms(eq.left),ids=idsFor('l',eq.left);
         for(let i=0;i<tt.length;i++)for(let j=i+1;j<tt.length;j++){
             const a=exactMono(tt[i]),b=exactMono(tt[j]);
-            if(a&&b&&a.degree===b.degree)return{text:'Fusionne ces termes semblables.',action:{kind:'combine',ids:[ids[i],ids[j]]},ids:[ids[i],ids[j]]};
+            if(a&&b&&a.degree===b.degree&&usefulFusion([ids[i],ids[j]]))return{text:'Fusionne ces termes semblables.',action:{kind:'combine',ids:[ids[i],ids[j]]},ids:[ids[i],ids[j]]};
             try{differenceOfSquares(eq,[ids[i],ids[j]]);return{text:'Les deux carrés sont prêts : utilise a² − b².',action:{kind:'difference-squares',ids:[ids[i],ids[j]]},ids:[ids[i],ids[j]]};}catch{/* Not a prepared difference. */}
         }
         const a=rational(lp[2]);if(a&&a.n<0n)return{text:'Multiplie par −1 pour obtenir un coefficient positif devant x².',action:{kind:'multiply',constant:rat(-1)}};
@@ -213,7 +214,7 @@ export function suggestion(g: Game): { text:string; action?:Event; ids?:string[]
     for(const side of ['l','r'] as const){
         const e=side==='l'?eq.left:eq.right,tt=terms(e),ids=idsFor(side,e);
         for(let i=0;i<tt.length;i++){
-            for(let j=i+1;j<tt.length;j++){const a=exactMono(tt[i]),b=exactMono(tt[j]);if(a&&b&&a.degree===b.degree)return{text:'Fusionne ces deux termes semblables.',action:{kind:'combine',ids:[ids[i],ids[j]]},ids:[ids[i],ids[j]]};}
+            for(let j=i+1;j<tt.length;j++){const a=exactMono(tt[i]),b=exactMono(tt[j]);if(a&&b&&a.degree===b.degree&&usefulFusion([ids[i],ids[j]]))return{text:'Fusionne ces deux termes semblables.',action:{kind:'combine',ids:[ids[i],ids[j]]},ids:[ids[i],ids[j]]};}
             if(expandable(tt[i]))return{text:'Développe la parenthèse avec les signes de ses termes.',action:{kind:'expand',id:ids[i]},ids:[ids[i]]};
             if(tt[i].kind==='fraction'&&!monomial(tt[i]))return{text:'Simplifie cette fraction.',action:{kind:'simplify',id:ids[i]},ids:[ids[i]]};
         }

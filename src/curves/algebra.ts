@@ -63,6 +63,6 @@ export function applyCurve(level:CurveLevel,state:CurveState,action:CurveAction)
  }
  for(const row of next.rows)for(const t of [...row.left,...row.right])if(t.a+t.b>2||t.q.n.toString().length>60||t.q.d.toString().length>60)throw Error('Expression trop grande.');return next;
 }
-export function expectedScalar(text:string):Scalar{const sign=text.startsWith('-')?-1:1,body=sign<0?text.slice(1):text;if(body.startsWith('sqrt('))return sign<0?sNeg(sRoot(readRational(body.slice(5,-1)))):sRoot(readRational(body.slice(5,-1)));return scalar(readRational(text));}
+export function expectedScalar(text:string):Scalar{const m=/^(-?\d+(?:\/\d+)?)?([+-]?)sqrt\(([^)]+)\)$/.exec(text);if(!m)return scalar(readRational(text));const root=sRoot(readRational(m[3]));return sAdd(scalar(m[1]?readRational(m[1]):rat(0)),m[2]==='-'?sNeg(root):root);}
 export function verifyCurve(level:CurveLevel,state:CurveState):[Scalar,Scalar][]{const r=state.reduction;if(!r||r.completed.length!==r.roots.length)throw Error('Résous toutes les coordonnées avant de conclure.');const wanted=level.expected.map(p=>p.map(expectedScalar) as [Scalar,Scalar]);if(wanted.length!==r.points.length||!wanted.every(p=>r.points.some(q=>sEqual(p[0],q[0])&&sEqual(p[1],q[1]))))throw Error('Il manque des intersections. Reprends les cas.');return r.points;}
 export function curveKey(row:CurveRow):string{return norm(row).map(t=>`${str(t.q)}:${t.a},${t.b}`).sort().join(';');}

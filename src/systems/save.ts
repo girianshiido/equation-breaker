@@ -1,3 +1,4 @@
+import { getSystemLevel } from './generator';
 import { systemLevels, systemInitialRows } from './levels';
 import { copyRows, manualSystemMoves, transformSystem, type Row, type SystemAction } from './engine';
 export interface SystemResult { stars:number; moves:number; hints:number; errors:number }
@@ -7,7 +8,7 @@ export interface SystemGame extends SystemSnapshot { rows:Row[] }
 export const freshSystems=():SystemsData=>({results:{},active:null,wheelMode:'multiply'});
 const object=(v:unknown):v is Record<string,unknown>=>typeof v==='object'&&v!==null&&!Array.isArray(v);
 const count=(v:unknown)=>typeof v==='number'&&Number.isFinite(v)&&v>=0?Math.min(100000,Math.floor(v)):0;
-export function newSystemGame(level:string,revision?:number):SystemGame { const l=systemLevels.find(l=>l.id===level);if(!l)throw Error('Niveau inconnu.');if(revision!==undefined&&revision!==1&&revision!==l.revision)throw Error('Version de niveau inconnue.');return {level,revision:revision??l.revision,events:[],moves:0,hints:0,errors:0,rows:copyRows(systemInitialRows(l,revision))}; }
+export function newSystemGame(level:string,revision?:number):SystemGame { const l=getSystemLevel(level);if(!l)throw Error('Niveau inconnu.');if(revision!==undefined&&revision!==1&&revision!==l.revision)throw Error('Version de niveau inconnue.');return {level,revision:revision??l.revision,events:[],moves:0,hints:0,errors:0,rows:copyRows(systemInitialRows(l,revision))}; }
 export function readSystemSnapshot(value:unknown):SystemGame|null {
     try {
         if(!object(value)||typeof value.level!=='string'||!Array.isArray(value.events)||value.events.length>401)return null;

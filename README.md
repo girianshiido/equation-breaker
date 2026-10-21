@@ -14,9 +14,9 @@
 | Équilibre | Addition identique, opposés, coefficients positifs/négatifs, division par constante non nulle |
 | Face-à-face | Inconnue dans les deux membres, fusion locale, plusieurs stratégies, aucune solution et identités |
 | Explosion | Distributivité, signes devant les groupes, plusieurs parenthèses, réduction |
-| Fraction Lab | Coefficients rationnels exacts, dénominateurs constants, groupes fractionnés |
-| Zero Product | Facteur commun choisi, carrés préparés et différence de carrés, produit nul et union sans doublon |
-| Quadratic Core | Complétion du carré avec compensation, identités choisies, racines rationnelles ou irrationnelles manipulables |
+| Fractions | Coefficients rationnels exacts, dénominateurs constants, groupes fractionnés |
+| Produit nul | Facteur commun choisi, carrés préparés et différence de carrés, produit nul et union sans doublon |
+| Second degré | Complétion du carré avec compensation, identités choisies, racines rationnelles ou irrationnelles manipulables |
 | Systèmes 2 × 2 | Substitution, combinaison, libre choix, fractions et termes dans les deux membres |
 | Systèmes 3 × 3 | 21 niveaux, substitutions multiples et éliminations successives |
 | Intersections | 12 systèmes du second degré en x et y, entièrement algébriques |
@@ -91,6 +91,14 @@ Le premier niveau cherche les intersections du cercle **x² + y² = 5** et de la
 Les douze niveaux comprennent cercle-droite, parabole-droite, deux cercles, tangences, absence d’intersection réelle, hyperbole, ellipse, deux paraboles et un cas à quatre points. Aucun tracé n’est affiché. Les racines et fractions restent exactes. L’écriture substituée reste visible avant développement ; les identités et la complétion du carré restent des choix du joueur. Les accolades et parenthèses s’étirent, et les ensembles de quatre couples passent sur deux lignes sur téléphone.
 
 Le monde se débloque après tous les niveaux 3 × 3. Les manipulations et les résolutions de coordonnées sont sauvegardées par rejeu, y compris une équation du second degré encore en cours.
+
+### Laboratoire : des expériences inédites
+
+La campagne permet de rejouer librement les niveaux déjà débloqués. Le laboratoire sert à créer **de nouvelles équations et de nouveaux systèmes**, avec neuf cartes correspondant aux neuf mondes. Chaque carte respecte le déblocage de son monde en campagne.
+
+Les systèmes 2 × 2 et 3 × 3 varient les coefficients, les signes et les constantes rationnelles, y compris les cas sans solution ou avec une infinité de solutions. La méthode y est libre. Les intersections du second degré varient par translations, changements d’échelle et symétries : elles conservent des solutions exactes, avec zéro, un, deux ou quatre couples. La résolution utilise les gestes ordinaires et les mêmes identités manuelles.
+
+**Nouveau système** crée une autre expérience ; **Rejouer** reprend la même. La graine et les étapes permettent de retrouver une partie inédite après fermeture ou rechargement, y compris pendant le calcul d’une coordonnée. Les entraînements ne donnent pas d’étoiles de campagne et ne débloquent aucun niveau. Les trois mondes concernés portent désormais les noms français **Fractions**, **Produit nul** et **Second degré**.
 
 ### Étoiles
 
@@ -168,6 +176,7 @@ pnpm qa:system-worlds
 pnpm qa:system-methods
 pnpm qa:curves
 pnpm qa:curve-gestures
+pnpm qa:laboratory
 ```
 
 Les tests Vitest couvrent aussi les 42 systèmes linéaires et les 12 systèmes quadratiques résolus, les substitutions multiples, les combinaisons exactes et la reprise des nouveaux profils. Ils couvrent les cas mathématiques de référence, les 72 résolutions complètes, 1 800 niveaux générés résolus, 1 200 transformations d’équivalence, les opérations interdites, l’annulation et la reconstruction des branches sauvegardées. Le scénario navigateur utilise uniquement les boutons réels : aucune commande de résolution n’est exposée par l’application.
